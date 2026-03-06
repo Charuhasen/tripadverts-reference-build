@@ -1,0 +1,173 @@
+# Technical Requirements Document: Smart DOOH Impression Tracking System
+
+This document outlines the end-to-end technical process for detecting, validating, and logging ad impressions within a vehicle-based Digital Out-of-Home (DOOH) environment.
+
+---
+
+## 1. System Objectives
+* **Accuracy:** Distinguish between a "play" and a "verified view."
+* **Uniqueness:** Ensure the same passenger is not counted multiple times for the same ad.
+* **Efficiency:** Optimize for mid-range Android tablets (battery/heat management).
+* **Privacy:** Adhere to "Privacy by Design" (no image storage, edge-only inference).
+
+---
+
+## 2. Process Phase 1: Screen Playback Logging (The Baseline)
+Every ad playback event must initiate a "Proof-of-Play" record.
+
+* **Trigger:** The media player starts an ad file.
+* **Required Metadata:**
+    * `Device_ID`: Unique tablet identifier.
+    * `Ad_ID`: Creative identifier.
+    * `Timestamp`: ISO 8601 format (GMT).
+    * `GPS_Coordinates`: Latitude/Longitude.
+    * `Network_Status`: Current connectivity (4G/5G/Offline).
+
+---
+
+## 3. Process Phase 2: Audience Detection & Spatial Tracking
+This phase uses low-power spatial logic to manage the "who" without heavy AI processing.
+
+### A. Detection (MediaPipe)
+
+* **Inference Frequency:** 10 Frames Per Second (FPS).
+* **Output:** Face Bounding Box + 3D Landmarks.
+* **Logic:** If `Face_Count > 0`, transition from **Standby** to **Active Mode**.
+
+### B. Spatial Tracking (Efficiency Buffer)
+* **Coordinate Memory:** Store the $(x,y)$ center-point of the face.
+* **Spatial Consistency:** If the new frame’s $(x,y)$ is within $\pm 15\%$ of the previous frame, assign the same `Temporary_ID`.
+* **Benefit:** Prevents running the expensive Re-Identification model on every single frame.
+
+---
+
+## 4. Process Phase 3: Unique Identification (The Re-ID Layer)
+Ensures "Unique Impressions" by creating a mathematical signature of the passenger.
+
+* **Model:** MobileNet V3 (Feature Extractor).
+* **Input:** Aligned face crop (normalized via MediaPipe landmarks).
+* **Output:** 128-dimensional Feature Vector (Embedding).
+
+### Re-Identification Logic
+Compare the current Vector against a **Local Seat Gallery** (RAM-cached vectors of the current ride).
+
+| Algorithm | Decision Matrix | Action |
+| :--- | :--- | :--- |
+| **Cosine Similarity** | Score $\ge 0.80$ | **Known Passenger:** Resume existing session. |
+| **Cosine Similarity** | Score $< 0.80$ | **New Passenger:** Initialize new unique record. |
+
+---
+
+## 5. Process Phase 4: Gaze & Attention (The Quality Filter)
+Converts a "Viewable Impression" into a "Qualified Impression."
+
+
+
+* **Calculation:** Head Pose Estimation (Euler Angles).
+* **Qualified Thresholds:**
+    * **Yaw (Horizontal):** $\pm 20^\circ$
+    * **Pitch (Vertical):** $\pm 15^\circ$
+* **The Timer:** An `Attention_Timer` accumulates time **ONLY** when the passenger’s head pose is within these thresholds during an active ad play.
+
+---
+
+## 6. Process Phase 5: Sensor Fusion & Environmental Context
+Integrates external sensors to provide a "Quality Score" for the advertiser.
+
+### A. Geo-Intelligence (GPS)
+* **Zone Mapping:** Cross-reference GPS with predefined GeoJSON zones in Accra.
+* **Pricing Multipliers:**
+    * **Premium (Osu/Airport City):** $1.5\times$
+    * **Standard (Residential):** $1.0\times$
+
+### B. Motion Dynamics (Accelerometer)
+* **Stationary/Traffic:** Multiplier $1.2\times$ (higher engagement potential).
+* **High Speed (>60 km/h):** Multiplier $0.8\times$ (lower focus/stability).
+
+---
+
+## 7. Data Transmission & Privacy Cleanup
+Finalizing the billable event and clearing sensitive memory.
+
+1.  **Aggregation:** Compile the `Playback_Log`, `Total_Gaze_Time`, `Unique_ID_Count`, and `Environmental_Score`.
+2.  **Encryption:** Bundle into a JSON packet and encrypt for transit.
+3.  **The Wipe:** **Crucial Step.** Clear all Feature Vectors from RAM once the ad ends or the passenger is no longer detected for $> 60$ seconds.
+4.  **Upload:** Post to the central server via **MQTT** or **HTTPS**. If offline, queue in local SQLite until the next network handshake.
+
+### 8. Summary of Billable Logic
+
+This table defines the logic used to categorize and price ad impressions based on the data gathered from the previous phases.
+
+| Metric | Condition | Billing Status |
+| :--- | :--- | :--- |
+| **OTS (Opportunity to See)** | Ad played + Face detected | **Base Rate** |
+| **Viewable Impression** | Ad played + Face detected + Time $\ge$ 2s | **Standard Rate** |
+| **Qualified Impression** | Ad played + Gaze Verified + High-Value Zone | **Premium Rate** |
+
+
+
+# Impressions Tracking Algo
+
+### 1. The "Feature Embedding" Approach
+
+Instead of trying to create a unique "ID" or "Hash," you treat the face as a point in a high-dimensional space.
+
+- **How it works:** Your **MobileNet V3** (acting as an encoder) takes the face and outputs a "Feature Vector" (e.g., an array of 128 numbers).
+- **Why it's better:** Two images of the same person will produce two vectors that are mathematically "close" to each other, even if the lighting changes. A hash would fail here; a vector succeeds.
+
+---
+
+### 2. The "Spatial-Temporal" Tracking (The Real Efficiency Hack)
+
+Before you even run your AI model to identify "who" the person is, use **Spatial Tracking**. This saves massive CPU/Battery on the tablet.
+
+- **Bounding Box Tracking:** MediaPipe gives you the (x,y) coordinates of the face.
+- **The Logic:** If a face was at (100,200) in Frame 1, and a face is at (102,202) in Frame 2, it is **physically impossible** for that to be a different person in 1/30th of a second.
+- **Execution:** 1. Assign a `Temporary_ID` based solely on screen position.
+2. Only run the expensive MobileNet "Identification" once every 5 seconds or if the face leaves and re-enters the frame.
+
+---
+
+### 3. Execution Plan: The "Impression Tracker" Algorithm
+
+### Step 1: Detection (MediaPipe)
+
+- **Input:** Camera Stream.
+- **Output:** Face Bounding Box + 3D Landmarks.
+- **Constraint:** If `No_Face_Detected`, pause timer, clear "Current_Session" after 30 seconds.
+
+### Step 2: Gaze & Attention (The Filter)
+
+- **Calculation:** Use the 3D landmarks to calculate the **Head Pose (Pitch/Yaw/Roll)**.
+- **The "Qualified" Check:** * If `Yaw` (side-to-side) is <20∘ AND `Pitch` (up-down) is <15∘, the user is facing the screen.
+    - **Action:** Start the "Active View Timer."
+
+### Step 3: Unique Identification (The Re-ID)
+
+- **Trigger:** Only run this when a "New" bounding box appears.
+- **Process:** 1. Crop the face → Pass to **MobileNet V3**.
+2. Get the **128-float vector**.
+3. **The Comparison:** Compare this vector against a "Local Seat Gallery" (the last 2-3 people seen in that taxi) using **Cosine Similarity**.
+4. **Decision:** * Similarity >0.80: It’s the same passenger. **Resume** previous session.
+* Similarity <0.80: It’s a new passenger. **Start** New Impression Count.
+
+### Step 4: Data Aggregation (The Log)
+
+- **Storage:** Keep a simple JSON object in the tablet's Volatile Memory (RAM):
+
+```tsx
+{
+  "temp_id": 1,
+  "vector": [0.12, -0.5, ...], 
+  "total_view_time": 45.2, // seconds
+  "is_billable": true // if > X seconds
+}
+```
+
+- **Finalization:** When the taxi is empty or the app cycles, push the `total_view_time` and `ad_id` to your backend and **wipe the vector data** to maintain privacy.
+
+### Why this is the "Best" approach for a Taxi Tablet:
+
+1. **Low Memory:** You are storing arrays of numbers, not images.
+2. **Privacy:** You aren't "identifying" the person via a database; you are just "distinguishing" them from the next passenger.
+3. **Battery/Heat:** Spatial tracking (Step 2) handles 90% of the work, so the AI model only works hard when someone new gets in.

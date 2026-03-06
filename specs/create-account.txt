@@ -1,0 +1,306 @@
+# Multi-Country Business & Identity Verification (Frontend UI)
+
+## Objective
+
+Design and implement a scalable frontend onboarding flow that supports country-specific KYC (individual) and KYB (business) verification processes.
+
+Supported countries (Phase 1):
+
+- Ghana
+- Nigeria
+- United States
+- United Kingdom
+
+This issue covers frontend UI and form logic only. Backend validation, third-party verification APIs, and compliance review logic are handled separately.
+
+---
+
+# 1. High-Level Architecture
+
+## Core Requirement
+
+The registration system must:
+
+- Allow country selection at the beginning
+- Dynamically render country-specific identity and business verification fields
+- Support both Individual and Registered Business accounts
+- Maintain a modular, extensible structure for adding more countries later
+
+---
+
+# 2. Step 1 – Account Type & Country Selection
+
+## Page: `/customer-registration`
+
+### Tasks
+
+- [x] Country dropdown (Required)
+  - Ghana
+  - Nigeria
+  - United States
+  - United Kingdom
+- [x] Account type toggle:
+  - Individual
+  - Registered Business
+- [ ] Store selected country in global registration state
+- [x] Continue button (disabled until country + type selected)
+
+---
+
+# 3. Step 2 – Identity Verification (Individual / Representative)
+
+This step applies to:
+
+- Individual accounts
+- Business accounts (authorized representative)
+
+The form must dynamically change based on selected country.
+
+---
+
+## 3.1 Ghana – Identity Fields
+
+- [ ] Ghana Card Number
+- [ ] Full Legal Name
+- [ ] Date of Birth
+- [ ] Phone Number
+- [ ] Email
+- [ ] Residential Address
+- [ ] Upload Ghana Card (Front)
+- [ ] Upload Ghana Card (Back)
+- [ ] Optional selfie capture component
+- [ ] Authorization declaration checkbox (for business reps)
+
+---
+
+## 3.2 Nigeria – Identity Fields
+
+- [ ] National Identification Number (NIN)
+- [ ] Full Legal Name
+- [ ] Date of Birth
+- [ ] Phone Number
+- [ ] Email
+- [ ] Residential Address
+- [ ] Upload Government ID (National ID / Passport / Driver’s License)
+- [ ] Optional selfie capture component
+- [ ] Authorization declaration checkbox
+
+---
+
+## 3.3 United States – Identity Fields
+
+- [ ] Full Legal Name
+- [ ] Date of Birth
+- [ ] SSN (masked input, last 4 digits only in UI)
+- [ ] Email
+- [ ] Phone Number
+- [ ] Residential Address
+- [ ] Upload Government ID (Driver’s License / Passport)
+- [ ] Optional selfie capture
+- [ ] Authorization declaration checkbox
+
+---
+
+## 3.4 United Kingdom – Identity Fields
+
+- [ ] Full Legal Name
+- [ ] Date of Birth
+- [ ] National Insurance Number
+- [ ] Email
+- [ ] Phone Number
+- [ ] Residential Address
+- [ ] Upload Government ID (Passport / Driving License)
+- [ ] Optional selfie capture
+- [ ] Authorization declaration checkbox
+
+---
+
+# 4. Step 3 – Business Information (KYB)
+
+Only displayed if Account Type = Registered Business.
+
+Fields must dynamically change per country.
+
+---
+
+## 4.1 Ghana – Business Fields
+
+- [ ] Registered Business Name
+- [ ] Trading Name (if different)
+- [ ] Business Registration Number
+- [ ] Date of Incorporation
+- [ ] Business Type (LLC, Sole Proprietorship, etc.)
+- [ ] Registered Office Address
+- [ ] TIN (Tax Identification Number)
+- [ ] VAT Registration Number (optional)
+- [ ] Upload Certificate of Incorporation
+- [ ] Upload TIN Certificate
+
+---
+
+## 4.2 Nigeria – Business Fields
+
+- [ ] Registered Business Name
+- [ ] CAC Registration Number
+- [ ] Date of Incorporation
+- [ ] Business Type
+- [ ] Registered Office Address
+- [ ] TIN
+- [ ] VAT Number (if applicable)
+- [ ] Upload Certificate of Incorporation
+- [ ] Upload CAC Documents
+
+---
+
+## 4.3 United States – Business Fields
+
+- [ ] Legal Business Name
+- [ ] DBA Name (if applicable)
+- [ ] EIN (Employer Identification Number)
+- [ ] State of Incorporation (dropdown)
+- [ ] Date of Incorporation
+- [ ] Business Type (LLC, C-Corp, S-Corp, Sole Prop)
+- [ ] Registered Business Address
+- [ ] Upload Certificate of Formation / Incorporation
+- [ ] Upload EIN Confirmation Letter
+
+---
+
+## 4.4 United Kingdom – Business Fields
+
+- [ ] Registered Company Name
+- [ ] Company Number (Companies House)
+- [ ] Date of Incorporation
+- [ ] Business Type (Ltd, PLC, LLP, Sole Trader)
+- [ ] Registered Office Address
+- [ ] UTR (Unique Taxpayer Reference)
+- [ ] VAT Number (if applicable)
+- [ ] Upload Certificate of Incorporation
+- [ ] Upload UTR Confirmation Document
+
+---
+
+# 5. Step 4 – Directors / Beneficial Owners
+
+Required for all business accounts across countries.
+
+### Tasks
+
+- [ ] Repeatable Director form:
+  - Full Name
+  - Nationality
+  - Date of Birth
+  - Role (Director / Shareholder / CEO)
+  - Ownership Percentage
+- [ ] Add Director button
+- [ ] Remove Director button
+- [ ] Ownership percentage validation (≤ 100%)
+- [ ] Select Authorized Signatory dropdown
+
+---
+
+# 6. Step 5 – Banking & Payment Information
+
+Country-specific bank formats must be supported.
+
+---
+
+## Ghana
+
+- [ ] Bank Name
+- [ ] Account Name
+- [ ] Account Number
+
+---
+
+## Nigeria
+
+- [ ] Bank Name
+- [ ] Account Name
+- [ ] Account Number
+
+---
+
+## United States
+
+- [ ] Bank Name
+- [ ] Account Holder Name
+- [ ] Routing Number
+- [ ] Account Number
+
+---
+
+## United Kingdom
+
+- [ ] Bank Name
+- [ ] Account Holder Name
+- [ ] Sort Code
+- [ ] Account Number
+
+---
+
+# 7. Step 6 – Review & Submit
+
+## Tasks
+
+- [ ] Collapsible summary sections:
+  - Identity Details
+  - Business Details
+  - Directors
+  - Tax Information
+  - Bank Information
+  - Uploaded Documents
+- [ ] Edit buttons per section
+- [ ] Compliance declaration checkbox
+- [ ] Terms & Conditions checkbox
+- [ ] Submit for Verification button
+- [ ] Loading state
+- [ ] Success screen with verification status
+
+---
+
+# 8. Verification Status Management (Post-Registration UI)
+
+- [ ] Account status badge:
+  - Pending Review
+  - Verified
+  - Additional Information Required
+  - Rejected
+- [ ] Restrict campaign creation if not verified
+- [ ] Document re-upload modal if flagged
+- [ ] Notification banner for incomplete verification
+
+---
+
+# 9. Reusability & Extensibility Requirements
+
+- [ ] Country configuration file (country-based schema mapping)
+- [ ] Dynamic form rendering based on schema
+- [ ] Centralized validation logic
+- [ ] Modular document upload component
+- [ ] Masked input component for sensitive fields
+- [ ] International phone number support
+- [ ] International address component
+
+---
+
+# 10. UX & Security Requirements
+
+- [ ] Multi-step progress indicator
+- [ ] Auto-save form state
+- [ ] Secure input styling for sensitive data
+- [ ] Field-level validation messages
+- [ ] Mobile responsive layout
+- [ ] Accessibility compliance (ARIA support)
+
+---
+
+# Deliverable
+
+A fully dynamic, multi-country frontend onboarding system that:
+
+- Supports Ghana, Nigeria, United States, and United Kingdom
+- Adapts KYC and KYB requirements per country
+- Handles identity, business, tax, and banking inputs
+- Provides verification state management
+- Is architected for future country expansion
