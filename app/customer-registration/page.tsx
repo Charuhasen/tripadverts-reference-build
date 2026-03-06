@@ -9,7 +9,8 @@ import { StepBusinessInfo } from "./components/StepBusinessInfo";
 import { StepDirectors } from "./components/StepDirectors";
 import { StepBanking } from "./components/StepBanking";
 import { StepReview } from "./components/StepReview";
-import { Check } from "lucide-react";
+import { Check, MonitorSmartphone } from "lucide-react";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 const STEPS_CONFIG = [
   { id: 1, title: "Account Type" },
@@ -69,6 +70,27 @@ export default function CustomerRegistrationPage() {
       transition: { duration: 0.3, ease: "easeInOut" },
     }),
   };
+
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const [mounted, setMounted] = useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null; // Prevent hydration mismatch
+
+  if (!isDesktop) {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center p-6 bg-background text-foreground text-center">
+        <MonitorSmartphone className="w-16 h-16 text-muted-foreground mb-6" />
+        <h2 className="text-2xl font-bold tracking-tight mb-2">Desktop Required</h2>
+        <p className="text-muted-foreground max-w-sm">
+          This registration process requires scanning multiple documents and is best experienced on a desktop, laptop, or tablet device.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen bg-background text-foreground flex flex-col items-center py-6 px-4 sm:px-6 lg:px-8 overflow-hidden">
