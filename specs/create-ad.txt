@@ -1,0 +1,522 @@
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   # Create Ad Campaign Flow – Frontend Specification (Revised)## ObjectiveDesign and implement a **production-ready frontend flow** for creating and purchasing an advertising campaign on the DOOH taxi network.The system must allow advertisers to:- Create a campaign- Select geographic targeting zones within Accra- Choose the number of taxis based on real-time availability- Select scheduling in **1-hour time slots**- View **estimated impressions**- Complete **secure payment**This specification covers **frontend behaviour, UI requirements, validation logic, and interaction design**.Backend systems will handle:- Inventory availability- Impression calculations- Taxi supply per zone- Payment processing---# 1. Architecture Overview## Flow TypeThree-stage **campaign creation wizard**.The flow is intentionally simplified to **reduce friction in the advertiser purchase process**.## Route   `
+
+/campaigns/create
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   ## State ManagementA centralized campaign state object should persist across stages.Example structure:```tsCampaignDraft = {  campaignInfo: {},  campaignTarget: {},  campaignPayment: {}}   `
+
+State persistence requirements:
+
+*   Maintain selections when navigating backwards
+    
+*   Prevent data loss on step transitions
+    
+*   Optional **draft saving (future enhancement)**
+    
+
+2\. Campaign Creation Stages
+============================
+
+The campaign creation process consists of **three main stages**:
+
+1.  Campaign Information
+    
+2.  Campaign Target
+    
+3.  Campaign Payment
+    
+
+Each stage must include **validation before progression**.
+
+A **progress indicator** should display the user's position.
+
+Example:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   1. Campaign Information → 2. Campaign Target → 3. Payment   `
+
+Stage 1 – Campaign Information
+==============================
+
+Purpose
+-------
+
+Capture the **basic metadata** describing the advertising campaign.
+
+Fields
+------
+
+### Campaign Name
+
+**Type:** Text input**Required:** Yes
+
+Example:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   "New Product Launch – March"   `
+
+Validation:
+
+*   Required
+    
+*   Minimum length: 3 characters
+    
+*   Maximum length: 120 characters
+    
+
+### Campaign Objective
+
+**Type:** Dropdown**Required:** Yes
+
+Options:
+
+*   Awareness
+    
+*   Engagement
+    
+*   Promotion
+    
+
+### Campaign Description
+
+**Type:** Text area**Required:** Optional
+
+Purpose:
+
+*   Provide internal context for the campaign
+    
+*   Not visible in ad delivery
+    
+
+Maximum length:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   500 characters   `
+
+UI Requirements
+---------------
+
+*   Clean form layout
+    
+*   Inline validation
+    
+*   Clear input labels
+    
+*   Helper text where necessary
+    
+
+Validation Rules
+----------------
+
+The **Next button must remain disabled until:**
+
+*   Campaign Name is valid
+    
+*   Campaign Objective is selected
+    
+
+Stage 2 – Campaign Target
+=========================
+
+Purpose
+-------
+
+Allow advertisers to configure **where, when, and how their ads will be delivered**.
+
+This stage combines:
+
+*   Geographic targeting
+    
+*   Taxi inventory selection
+    
+*   Scheduling
+    
+*   Impression estimation
+    
+
+2.1 Zone Selection (Accra – Phase 1)
+====================================
+
+Scope
+-----
+
+Users select from **predefined geofenced zones within Accra**.
+
+Custom drawing or manual geofencing is **not supported in Phase 1**.
+
+Zone Data Requirements
+----------------------
+
+Each zone object must contain:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Zone IDZone NamePolygon CoordinatesTraffic Density ClassificationEstimated Daily ImpressionsZone CategoryAvailable Taxi Count   `
+
+Example zone categories:
+
+*   Commercial
+    
+*   Residential
+    
+*   CBD
+    
+*   Mixed
+    
+
+UI Components
+-------------
+
+### Interactive Map
+
+Map must display:
+
+*   Zone polygons
+    
+*   Hover state highlighting
+    
+*   Click selection
+    
+
+### Zone List View
+
+Alternative list interface including:
+
+*   Search functionality
+    
+*   Zone filtering
+    
+*   Quick selection
+    
+
+Example display:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   East LegonCategory: MixedTraffic: HighAvailable Taxis: 42Estimated Daily Impressions: 38,000   `
+
+Selection Rules
+---------------
+
+*   Multiple zones may be selected
+    
+*   Zones can be toggled on/off
+    
+*   Selected zones appear in a **summary sidebar**
+    
+
+Sidebar Summary
+---------------
+
+Displays:
+
+*   Selected zones
+    
+*   Total taxis available
+    
+*   Estimated impressions
+    
+*   Total campaign coverage
+    
+
+Validation
+----------
+
+User must select **at least one zone**.
+
+2.2 Taxi Allocation
+===================
+
+After zones are selected, the user chooses **how many taxis to use**.
+
+Taxi availability is constrained by:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Available taxis in selected zones   `
+
+UI Component
+------------
+
+### Taxi Quantity Selector
+
+Options:
+
+*   Slider
+    
+*   Numeric input
+    
+*   Preset tiers
+    
+
+Example presets:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   10 taxis25 taxis50 taxis100 taxisMaximum Available   `
+
+Validation
+----------
+
+*   Minimum: 1 taxi
+    
+*   Maximum: Available taxis across selected zones
+    
+
+2.3 Campaign Scheduling
+=======================
+
+Scheduling Model
+----------------
+
+Scheduling uses **1-hour advertising slots**.
+
+Example:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   09:00 – 10:0010:00 – 11:0011:00 – 12:00   `
+
+Required Inputs
+---------------
+
+### Campaign Start Date
+
+Date picker.
+
+### Campaign End Date
+
+Date picker.
+
+Validation:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   End date must be after start date   `
+
+### Time Slot Selection
+
+Selectable **hourly blocks**.
+
+Example UI:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   [08:00] [09:00] [10:00] [11:00][12:00] [13:00] [14:00] [15:00]   `
+
+Users can select **multiple slots per day**.
+
+Timezone
+--------
+
+Default:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   GMT   `
+
+Displayed clearly in the interface.
+
+Validation Rules
+----------------
+
+The system must prevent:
+
+*   Scheduling in the past
+    
+*   End date before start date
+    
+*   Invalid time ranges
+    
+
+2.4 Estimated Campaign Metrics
+==============================
+
+The interface must provide **live campaign estimates** based on user selections.
+
+Metrics include:
+
+### Estimated Impressions
+
+Based on:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Selected zonesTaxi countTime slotsCampaign durationTraffic density   `
+
+Displayed dynamically.
+
+Example:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Estimated Impressions: 245,000   `
+
+### Estimated Reach (Optional)
+
+Potential number of unique viewers.
+
+### Estimated Cost
+
+Calculated based on:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Taxi countCampaign durationTime slotsZone pricing tier   `
+
+Example:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Estimated Campaign Cost: $1,200   `
+
+UI Placement
+------------
+
+Metrics should appear in a **sticky campaign summary panel**.
+
+Stage 3 – Campaign Payment
+==========================
+
+Purpose
+-------
+
+Allow advertisers to **securely pay for their campaign before activation**.
+
+3.1 Payment Summary
+===================
+
+Display final campaign information.
+
+Includes:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Campaign NameSelected ZonesTaxi CountCampaign DatesSelected Time SlotsEstimated ImpressionsTotal Cost   `
+
+A **mini map preview** should show selected zones.
+
+3.2 Payment Methods
+===================
+
+Two supported payment options:
+
+### MTN Mobile Money (MoMo)
+
+Common payment method in Ghana.
+
+User flow:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Enter phone numberConfirm payment requestApprove on mobile device   `
+
+### Stripe
+
+Supports:
+
+*   Credit cards
+    
+*   Debit cards
+    
+*   International payments
+    
+
+UI Requirements
+---------------
+
+*   Payment method selector
+    
+*   Secure payment form
+    
+*   Clear confirmation messaging
+    
+
+3.3 Payment Validation
+======================
+
+User cannot proceed until:
+
+*   Payment method selected
+    
+*   Payment processed successfully
+    
+
+3.4 Payment Confirmation
+========================
+
+After successful payment:
+
+Display confirmation page including:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Campaign IDPayment ConfirmationCampaign Start DateEstimated Delivery   `
+
+4\. UI / UX Standards
+=====================
+
+The system must include:
+
+### Step Progress Indicator
+
+Example:
+
+Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Campaign Info → Targeting → Payment   `
+
+### Responsive Layout
+
+Desktop-first with tablet compatibility.
+
+### Card-Based Selection
+
+Used for:
+
+*   Zones
+    
+*   Taxi presets
+    
+*   Payment options
+    
+
+### Sticky Campaign Summary
+
+Visible during targeting stage.
+
+Displays:
+
+*   Selected zones
+    
+*   Taxi count
+    
+*   Estimated impressions
+    
+*   Estimated cost
+    
+
+### Loading States
+
+Required for:
+
+*   Map loading
+    
+*   Zone data loading
+    
+*   Impression calculations
+    
+
+### Error Handling
+
+Fallback UI required if:
+
+*   Map fails to load
+    
+*   Zone data unavailable
+    
+*   Inventory data fails
+    
+
+### Unsaved Changes Warning
+
+If the user attempts to leave the page before completion.
+
+5\. Accessibility Requirements
+==============================
+
+The interface must support:
+
+*   Full keyboard navigation
+    
+*   ARIA labels on interactive components
+    
+*   Accessible form validation
+    
+*   Proper color contrast compliance
+    
+
+6\. Completion Criteria
+=======================
+
+The Create Ad Campaign Flow is considered complete when:
+
+*   All three stages are navigable
+    
+*   Campaign state persists across navigation
+    
+*   Zones render correctly on the map
+    
+*   Taxi availability controls function properly
+    
+*   Hourly scheduling works correctly
+    
+*   Impression estimates update dynamically
+    
+*   Payment methods function successfully
+    
+*   The UI is responsive and production-ready

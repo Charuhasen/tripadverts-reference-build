@@ -1,0 +1,70 @@
+COEP Header Fix — Leaflet Map Tiles on /campaigns/create
+=========================================================
+Date: 2026-03-11
+
+PROBLEM
+-------
+The Leaflet map on the /campaigns/create Targeting step was rendering a grey
+background with no map tiles loading. The zone polygons showed correctly, but
+the underlying CartoDB/OpenStreetMap tiles were blocked at the network level.
+
+Browser console reported:
+  net::ERR_BLOCKED_BY_RESPONSE.NotSameOriginAfterDefaultedToSameOriginByCoep
+
+ROOT CAUSE
+----------
+next.config.ts had the following HTTP response headers applied globally to
+ALL routes (source: "/(.*)" ):
+
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+
+The `Cross-Origin-Embedder-Policy: require-corp` header causes the browser to
+block cross-origin resources (like map tiles fetched from
+basemaps.cartocdn.com) unless those resources explicitly respond with:
+
+  Cross-Origin-Resource-Policy: cross-origin
+
+CartoDB tile servers do not send this header, so all tile requests were
+silently blocked, resulting in a grey map.
+
+WHY COEP IS NEEDED
+------------------
+The COEP + COOP headers are required to enable `SharedArrayBuffer`, which is
+used by TensorFlow.js (WebGL backend) for the face tracking / gaze detection
+features accessible from other routes (e.g. /tracker). Removing COEP globally
+would break those features.
+
+FIX APPLIED
+-----------
+Scoped the strict COEP header to only non-campaign routes via a regex negative
+lookahead, and added a relaxed policy for /campaigns/* routes:
+
+  File: next.config.ts
+
+  // All non-campaign routes: strict COEP (needed for SharedArrayBuffer / TF.js)
+  {
+    source: "/((?!campaigns).*)",
+    headers: [
+      { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+      { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+    ],
+  },
+
+  // Campaign routes: relaxed policy so Leaflet can load external map tiles
+  {
+    source: "/campaigns/(.*)",
+    headers: [
+      { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
+    ],
+  },
+
+NOTE: Changes to next.config.ts require a full dev server restart to take
+effect (Ctrl+C, then npm run dev).
+
+RELATED FILES
+-------------
+- next.config.ts              — header scoping fix
+- app/campaigns/create/components/AccraZoneMap.tsx
+                              — Leaflet map component using CartoDB tiles
+- app/layout.tsx              — leaflet/dist/leaflet.css imported here globally
