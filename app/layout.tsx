@@ -8,7 +8,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-import { FloatingNav } from "@/components/FloatingNav";
+import { Navbar } from "@/components/Navbar";
 
 export const metadata: Metadata = {
   title: "DOOH Impression Tracker",
@@ -22,9 +22,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistMono.variable} font-mono antialiased bg-background text-foreground relative min-h-screen`}>
-        {children}
-        <FloatingNav />
+      <body className={`${geistMono.variable} font-mono antialiased bg-background text-foreground relative min-h-screen flex flex-col`}>
+        <Navbar />
+        <main className="flex-1 flex flex-col">{children}</main>
+
       </body>
     </html>
   );
