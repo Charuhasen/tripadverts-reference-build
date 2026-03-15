@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   Clock,
@@ -38,6 +39,7 @@ import {
   TIER_COLORS,
   type RateTier,
 } from "@/lib/pricing";
+import { getZonesForCity } from "@/lib/schemas/campaignData";
 
 // ── Types ──
 
@@ -80,6 +82,7 @@ interface DemoCampaign {
   zones: CampaignZone[];
   bookingSlots: BookingSlot[];
   adType: "image" | "video";
+  thumbnail: string;
   estimatedImpressions: number;
   proofOfPlay?: ProofOfPlaySummary;
 }
@@ -118,6 +121,7 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
     description: "Ramadan special offers on selected products across Accra zones",
     createdAt: "2026-02-01",
     adType: "video",
+    thumbnail: "/thumbnails/ramadan-promo.svg",
     zones: [
       { name: "East Legon", city: "Accra" },
       { name: "Osu", city: "Accra" },
@@ -161,6 +165,7 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
     description: "Brand awareness campaign for the new year across Lagos",
     createdAt: "2025-12-10",
     adType: "image",
+    thumbnail: "/thumbnails/new-year-push.svg",
     zones: [
       { name: "Victoria Island", city: "Lagos" },
       { name: "Lekki", city: "Lagos" },
@@ -201,6 +206,7 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
     description: "Fashion brand spring collection — targeting high-traffic commercial zones",
     createdAt: "2026-03-01",
     adType: "video",
+    thumbnail: "/thumbnails/spring-collection.svg",
     zones: [
       { name: "Cantonments", city: "Accra" },
       { name: "Osu", city: "Accra" },
@@ -228,6 +234,7 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
     description: "Mobile fintech app promotion on taxi-top screens in Nairobi",
     createdAt: "2026-03-08",
     adType: "image",
+    thumbnail: "/thumbnails/fintech-app.svg",
     zones: [
       { name: "Westlands", city: "Nairobi" },
       { name: "CBD", city: "Nairobi" },
@@ -252,6 +259,7 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
     description: "Unlimited data bundle offers for Q2 — pending creative review",
     createdAt: "2026-03-14",
     adType: "video",
+    thumbnail: "/thumbnails/telecom-bundle.svg",
     zones: [
       { name: "East Legon", city: "Accra" },
       { name: "Victoria Island", city: "Lagos" },
@@ -279,6 +287,7 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
     description: "Weekend open day announcement for new residential development",
     createdAt: "2026-03-13",
     adType: "image",
+    thumbnail: "/thumbnails/real-estate.svg",
     zones: [
       { name: "Spintex", city: "Accra" },
       { name: "Madina", city: "Accra" },
@@ -515,22 +524,65 @@ function RateChip({ label, rate, tier }: { label: string; rate: number; tier: Ra
   );
 }
 
+// ── Network summary stats ──
+const ACCRA_ZONES = getZonesForCity("accra");
+const NETWORK_BOOKED = 247;
+const NETWORK_TOTAL = ACCRA_ZONES.reduce((s, z) => s + z.availableTaxis, 0);
+const NETWORK_UTIL = Math.round((NETWORK_BOOKED / NETWORK_TOTAL) * 100);
+const NETWORK_HIGH = 2;
+const NETWORK_MED = 3;
+const NETWORK_LOW = ACCRA_ZONES.length - NETWORK_HIGH - NETWORK_MED;
+
 function NetworkDemandCard() {
   return (
     <div className="mb-8">
       <Link href="/advertiser/dashboard/network">
         <Card className="transition-shadow hover:shadow-md group">
-          <CardContent className="px-5 py-4 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Radio className="w-5 h-5 text-primary" />
+          <CardContent className="px-5 py-4">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Radio className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold">Network Demand — Accra</h3>
+                  <span className={cn(
+                    "text-[10px] font-bold px-1.5 py-0.5 rounded",
+                    NETWORK_UTIL >= 75 ? "bg-red-100 text-red-700" :
+                    NETWORK_UTIL >= 45 ? "bg-amber-100 text-amber-700" :
+                    "bg-green-100 text-green-700"
+                  )}>
+                    {NETWORK_UTIL}% capacity
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {NETWORK_BOOKED} of {NETWORK_TOTAL} taxis booked across {ACCRA_ZONES.length} zones
+                </p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-semibold">Network Demand — Accra</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                View live taxi availability and zone capacity across the network
-              </p>
+
+            {/* Stats row */}
+            <div className="mt-3 pt-3 border-t border-border flex items-center gap-6">
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="w-2 h-2 rounded-full bg-red-500" />
+                <span className="text-muted-foreground">{NETWORK_HIGH} high demand</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span className="text-muted-foreground">{NETWORK_MED} medium</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-muted-foreground">{NETWORK_LOW} available</span>
+              </div>
+              <div className="flex-1" />
+              <div className="w-32 h-1.5 bg-muted rounded-full overflow-hidden flex">
+                <div className="h-full bg-red-500" style={{ width: `${(NETWORK_HIGH / ACCRA_ZONES.length) * 100}%` }} />
+                <div className="h-full bg-amber-400" style={{ width: `${(NETWORK_MED / ACCRA_ZONES.length) * 100}%` }} />
+                <div className="h-full bg-green-500" style={{ width: `${(NETWORK_LOW / ACCRA_ZONES.length) * 100}%` }} />
+              </div>
             </div>
-            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
           </CardContent>
         </Card>
       </Link>
@@ -647,6 +699,17 @@ function CampaignCard({ campaign }: { campaign: DemoCampaign }) {
           className="w-full text-left px-5 py-4 flex items-start gap-4 cursor-pointer"
           onClick={() => setExpanded(!expanded)}
         >
+          {/* Thumbnail */}
+          <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted shrink-0">
+            <Image
+              src={campaign.thumbnail}
+              alt={campaign.name}
+              width={80}
+              height={80}
+              className="w-full h-full object-cover"
+            />
+          </div>
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-sm font-semibold truncate">{campaign.name}</h3>

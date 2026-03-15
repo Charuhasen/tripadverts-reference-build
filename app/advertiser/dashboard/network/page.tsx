@@ -1,10 +1,16 @@
 "use client";
 
-import React from "react";
+import React, { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
-import { ArrowLeft, Loader2, Radio } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { getZonesForCity } from "@/lib/schemas/campaignData";
 import type { ZoneDemand, DemandLevel } from "../components/NetworkDemandMap";
@@ -19,12 +25,10 @@ const NetworkDemandMap = dynamic(() => import("../components/NetworkDemandMap"),
   ),
 });
 
-// ── Demo demand data ──
+// ── Demo demand data per city ──
 
-const ACCRA_ZONES = getZonesForCity("accra");
-
-const ZONE_DEMANDS: ZoneDemand[] = ACCRA_ZONES.map((zone) => {
-  const demandMap: Record<string, { bookedTaxis: number; activeCampaigns: number }> = {
+const DEMAND_DATA: Record<string, Record<string, { bookedTaxis: number; activeCampaigns: number }>> = {
+  accra: {
     "osu": { bookedTaxis: 48, activeCampaigns: 5 },
     "circle": { bookedTaxis: 55, activeCampaigns: 6 },
     "airport-city": { bookedTaxis: 30, activeCampaigns: 4 },
@@ -35,45 +39,111 @@ const ZONE_DEMANDS: ZoneDemand[] = ACCRA_ZONES.map((zone) => {
     "legon": { bookedTaxis: 8, activeCampaigns: 1 },
     "cantonments": { bookedTaxis: 6, activeCampaigns: 1 },
     "dansoman": { bookedTaxis: 4, activeCampaigns: 0 },
-  };
+  },
+};
 
-  const data = demandMap[zone.id] ?? { bookedTaxis: 0, activeCampaigns: 0 };
-  const utilization = data.bookedTaxis / zone.availableTaxis;
-  let demand: DemandLevel = "low";
-  if (utilization >= 0.75) demand = "high";
-  else if (utilization >= 0.45) demand = "medium";
+const CITY_CENTERS: Record<string, [number, number]> = {
+  accra: [5.6037, -0.187],
+};
 
-  return { zone, demand, ...data };
-});
+const COUNTRIES = [
+  { value: "ghana", label: "Ghana", cities: ["accra"] },
+  { value: "nigeria", label: "Nigeria", cities: ["lagos"] },
+  { value: "kenya", label: "Kenya", cities: ["nairobi"] },
+];
 
-const networkTotalTaxis = ACCRA_ZONES.reduce((s, z) => s + z.availableTaxis, 0);
-const networkBookedTaxis = ZONE_DEMANDS.reduce((s, zd) => s + zd.bookedTaxis, 0);
-const networkUtilization = Math.round((networkBookedTaxis / networkTotalTaxis) * 100);
-const highDemandCount = ZONE_DEMANDS.filter((zd) => zd.demand === "high").length;
-const mediumDemandCount = ZONE_DEMANDS.filter((zd) => zd.demand === "medium").length;
-const lowDemandCount = ZONE_DEMANDS.filter((zd) => zd.demand === "low").length;
+const CITIES: Record<string, { value: string; label: string }[]> = {
+  ghana: [{ value: "accra", label: "Accra" }],
+  nigeria: [{ value: "lagos", label: "Lagos" }],
+  kenya: [{ value: "nairobi", label: "Nairobi" }],
+};
+
+const MEDIUMS = [
+  { value: "headrest", label: "Headrest" },
+];
+
+function buildZoneDemands(city: string): ZoneDemand[] {
+  const zones = getZonesForCity(city);
+  const demandMap = DEMAND_DATA[city] ?? {};
+
+  return zones.map((zone) => {
+    const data = demandMap[zone.id] ?? { bookedTaxis: 0, activeCampaigns: 0 };
+    const utilization = data.bookedTaxis / zone.availableTaxis;
+    let demand: DemandLevel = "low";
+    if (utilization >= 0.75) demand = "high";
+    else if (utilization >= 0.45) demand = "medium";
+    return { zone, demand, ...data };
+  });
+}
 
 function formatNumber(n: number) {
   return n.toLocaleString();
 }
 
 export default function NetworkDemandPage() {
+  const [country, setCountry] = useState("ghana");
+  const [city, setCity] = useState("accra");
+  const [medium, setMedium] = useState("headrest");
+
+  const zoneDemands = useMemo(() => buildZoneDemands(city), [city]);
+
+  const networkTotalTaxis = zoneDemands.reduce((s, zd) => s + zd.zone.availableTaxis, 0);
+  const networkBookedTaxis = zoneDemands.reduce((s, zd) => s + zd.bookedTaxis, 0);
+  const networkUtilization = networkTotalTaxis > 0 ? Math.round((networkBookedTaxis / networkTotalTaxis) * 100) : 0;
+  const highDemandCount = zoneDemands.filter((zd) => zd.demand === "high").length;
+  const mediumDemandCount = zoneDemands.filter((zd) => zd.demand === "medium").length;
+  const lowDemandCount = zoneDemands.filter((zd) => zd.demand === "low").length;
+  const center = CITY_CENTERS[city] ?? [5.6037, -0.187];
+
+  const handleCountryChange = (val: string) => {
+    setCountry(val);
+    const firstCity = CITIES[val]?.[0]?.value ?? "";
+    setCity(firstCity);
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-screen-xl mx-auto px-6 lg:px-10 py-8">
-        {/* Header */}
-        <div className="mb-6">
-          <Link
-            href="/advertiser/dashboard"
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-3"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back to Dashboard
-          </Link>
-          <h1 className="text-2xl font-bold tracking-tight">Network Demand — Accra</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Live availability across all geofence zones in the Accra network
-          </p>
+        {/* Selectors */}
+        <div className="flex items-center gap-3 mb-6 flex-wrap">
+          <Select value={country} onValueChange={handleCountryChange}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Country" />
+            </SelectTrigger>
+            <SelectContent>
+              {COUNTRIES.map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  {c.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={city} onValueChange={setCity}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="City" />
+            </SelectTrigger>
+            <SelectContent>
+              {(CITIES[country] ?? []).map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  {c.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={medium} onValueChange={setMedium}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Medium" />
+            </SelectTrigger>
+            <SelectContent>
+              {MEDIUMS.map((m) => (
+                <SelectItem key={m.value} value={m.value}>
+                  {m.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Summary stats */}
@@ -82,7 +152,7 @@ export default function NetworkDemandPage() {
             <CardContent className="pt-5 pb-4 px-5">
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Taxis</p>
               <p className="text-2xl font-bold mt-1">{formatNumber(networkTotalTaxis)}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">across {ACCRA_ZONES.length} zones</p>
+              <p className="text-xs text-muted-foreground mt-0.5">across {zoneDemands.length} zones</p>
             </CardContent>
           </Card>
           <Card>
@@ -123,66 +193,74 @@ export default function NetworkDemandPage() {
                   <span className="w-2.5 h-2.5 rounded-full bg-green-500" /> {lowDemandCount} low
                 </span>
               </div>
-              <div className="w-full h-1.5 bg-muted rounded-full mt-2 overflow-hidden flex">
-                <div className="h-full bg-red-500" style={{ width: `${(highDemandCount / ZONE_DEMANDS.length) * 100}%` }} />
-                <div className="h-full bg-amber-400" style={{ width: `${(mediumDemandCount / ZONE_DEMANDS.length) * 100}%` }} />
-                <div className="h-full bg-green-500" style={{ width: `${(lowDemandCount / ZONE_DEMANDS.length) * 100}%` }} />
-              </div>
+              {zoneDemands.length > 0 && (
+                <div className="w-full h-1.5 bg-muted rounded-full mt-2 overflow-hidden flex">
+                  <div className="h-full bg-red-500" style={{ width: `${(highDemandCount / zoneDemands.length) * 100}%` }} />
+                  <div className="h-full bg-amber-400" style={{ width: `${(mediumDemandCount / zoneDemands.length) * 100}%` }} />
+                  <div className="h-full bg-green-500" style={{ width: `${(lowDemandCount / zoneDemands.length) * 100}%` }} />
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
         {/* Map + zone list */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
-          <div className="rounded-xl overflow-hidden border border-border h-[600px]">
-            <NetworkDemandMap
-              zoneDemands={ZONE_DEMANDS}
-              center={[5.6037, -0.1870]}
-              zoom={12}
-            />
-          </div>
+        {zoneDemands.length > 0 ? (
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
+            <div className="rounded-xl overflow-hidden border border-border h-[600px]">
+              <NetworkDemandMap
+                zoneDemands={zoneDemands}
+                center={center}
+                zoom={12}
+              />
+            </div>
 
-          <div className="border border-border rounded-lg overflow-hidden flex flex-col h-[600px]">
-            <div className="px-3 py-2.5 bg-muted/50 border-b border-border shrink-0">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Zone Availability
-              </p>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              {[...ZONE_DEMANDS]
-                .sort((a, b) => (b.bookedTaxis / b.zone.availableTaxis) - (a.bookedTaxis / a.zone.availableTaxis))
-                .map((zd) => {
-                  const pct = Math.round((zd.bookedTaxis / zd.zone.availableTaxis) * 100);
-                  const available = zd.zone.availableTaxis - zd.bookedTaxis;
-                  const barColor =
-                    zd.demand === "high" ? "bg-red-500" :
-                    zd.demand === "medium" ? "bg-amber-400" :
-                    "bg-green-500";
-                  return (
-                    <div key={zd.zone.id} className="px-3 py-2.5 border-b border-border last:border-b-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">{zd.zone.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {available} available
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                          <div className={cn("h-full rounded-full", barColor)} style={{ width: `${pct}%` }} />
+            <div className="border border-border rounded-lg overflow-hidden flex flex-col h-[600px]">
+              <div className="px-3 py-2.5 bg-muted/50 border-b border-border shrink-0">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Zone Availability
+                </p>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                {[...zoneDemands]
+                  .sort((a, b) => (b.bookedTaxis / b.zone.availableTaxis) - (a.bookedTaxis / a.zone.availableTaxis))
+                  .map((zd) => {
+                    const pct = Math.round((zd.bookedTaxis / zd.zone.availableTaxis) * 100);
+                    const available = zd.zone.availableTaxis - zd.bookedTaxis;
+                    const barColor =
+                      zd.demand === "high" ? "bg-red-500" :
+                      zd.demand === "medium" ? "bg-amber-400" :
+                      "bg-green-500";
+                    return (
+                      <div key={zd.zone.id} className="px-3 py-2.5 border-b border-border last:border-b-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium">{zd.zone.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {available} available
+                          </span>
                         </div>
-                        <span className="text-[10px] font-semibold text-muted-foreground w-8 text-right">
-                          {pct}%
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div className={cn("h-full rounded-full", barColor)} style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-[10px] font-semibold text-muted-foreground w-8 text-right">
+                            {pct}%
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {zd.bookedTaxis}/{zd.zone.availableTaxis} taxis · {zd.activeCampaigns} campaign{zd.activeCampaigns !== 1 ? "s" : ""}
+                        </p>
                       </div>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        {zd.bookedTaxis}/{zd.zone.availableTaxis} taxis · {zd.activeCampaigns} campaign{zd.activeCampaigns !== 1 ? "s" : ""}
-                      </p>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="text-center py-20 text-muted-foreground text-sm">
+            No zone data available for this selection yet.
+          </div>
+        )}
       </div>
     </div>
   );

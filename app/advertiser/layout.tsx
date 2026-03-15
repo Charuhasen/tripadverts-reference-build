@@ -1,14 +1,14 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FilePlus, UserPlus, Radio, User } from "lucide-react";
+import { LayoutDashboard, FilePlus, UserPlus, ChevronDown, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const NAV_ITEMS = [
+const ADVERTISER_ITEMS = [
   { label: "Dashboard", href: "/advertiser/dashboard", icon: LayoutDashboard },
   { label: "Create Ad", href: "/advertiser/create-ad", icon: FilePlus },
-  { label: "Network", href: "/advertiser/dashboard/network", icon: Radio },
   { label: "Register", href: "/advertiser/register", icon: UserPlus },
 ];
 
@@ -18,6 +18,20 @@ export default function AdvertiserLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const isAdvertiserActive = pathname.startsWith("/advertiser");
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -31,31 +45,48 @@ export default function AdvertiserLayout({
             TripAdverts
           </Link>
 
-          {/* Nav links */}
-          <nav className="flex items-center gap-1 overflow-x-auto">
-            {NAV_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const active =
-                pathname === item.href ||
-                (item.href !== "/advertiser/dashboard" &&
-                  pathname.startsWith(item.href));
+          {/* Advertiser dropdown */}
+          <nav className="flex items-center gap-1">
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setOpen(!open)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer",
+                  isAdvertiserActive
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                Advertiser
+                <ChevronDown className={cn("w-3 h-3 transition-transform", open && "rotate-180")} />
+              </button>
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap",
-                    active
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  )}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  {item.label}
-                </Link>
-              );
-            })}
+              {open && (
+                <div className="absolute top-full left-0 mt-1 w-48 bg-card border border-border rounded-lg shadow-lg py-1 z-50">
+                  {ADVERTISER_ITEMS.map((item) => {
+                    const Icon = item.icon;
+                    const active = pathname === item.href || pathname.startsWith(item.href + "/");
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setOpen(false)}
+                        className={cn(
+                          "flex items-center gap-2.5 px-3 py-2 text-xs font-medium transition-colors",
+                          active
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        )}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </nav>
 
           {/* Spacer */}
@@ -70,7 +101,7 @@ export default function AdvertiserLayout({
         </div>
       </header>
 
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 flex flex-col">{children}</main>
     </div>
   );
 }

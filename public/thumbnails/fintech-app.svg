@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <rect width="400" height="400" fill="#064e3b"/>
+  <rect x="155" y="100" width="90" height="160" rx="12" fill="#10b981" opacity="0.8"/>
+  <rect x="170" y="120" width="60" height="80" rx="4" fill="#064e3b"/>
+  <text x="200" y="310" text-anchor="middle" font-family="sans-serif" font-size="22" font-weight="bold" fill="#ffffff">FinTech</text>
+  <text x="200" y="340" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#6ee7b7">Install Now</text>
+</svg>
