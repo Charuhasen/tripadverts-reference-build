@@ -442,11 +442,13 @@ export function StepCampaignTarget({ data, onNext, onBack }: Props) {
               <p className="text-xs font-bold leading-tight">{campaignDays > 0 ? campaignDays : "—"}</p>
             </div>
             <div className="w-px h-7 bg-primary/20 mx-2 shrink-0" />
-            {/* Avg hours */}
+            {/* Taxis */}
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] text-muted-foreground uppercase font-semibold leading-none">Hrs/day</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-semibold leading-none">Taxis</p>
               <p className="text-xs font-bold leading-tight">
-                {avgHoursPerDay > 0 ? avgHoursPerDay.toFixed(avgHoursPerDay % 1 === 0 ? 0 : 1) : "—"}
+                {selectedZones.length > 0
+                  ? selectedZones.reduce((sum, z) => sum + z.availableTaxis, 0).toLocaleString()
+                  : "—"}
               </p>
             </div>
             <div className="w-px h-7 bg-primary/20 mx-2 shrink-0" />
