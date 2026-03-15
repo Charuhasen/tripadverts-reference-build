@@ -21,6 +21,7 @@ import {
   Info,
   Radio,
   ArrowRight,
+  Plus,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -841,23 +842,33 @@ export default function AdvertiserDashboardPage() {
         <RateCardPanel />
 
         <Tabs defaultValue="all">
-          <TabsList>
-            <TabsTrigger value="all">
-              All ({DEMO_CAMPAIGNS.length})
-            </TabsTrigger>
-            <TabsTrigger value="running">
-              <Play className="w-3 h-3 mr-1" />
-              Live ({running.length})
-            </TabsTrigger>
-            <TabsTrigger value="pending">
-              <Clock className="w-3 h-3 mr-1" />
-              Pending ({pending.length})
-            </TabsTrigger>
-            <TabsTrigger value="completed">
-              <CheckCircle2 className="w-3 h-3 mr-1" />
-              Completed ({completed.length})
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between gap-4">
+            <TabsList>
+              <TabsTrigger value="all">
+                All ({DEMO_CAMPAIGNS.length})
+              </TabsTrigger>
+              <TabsTrigger value="running">
+                <Play className="w-3 h-3 mr-1" />
+                Live ({running.length})
+              </TabsTrigger>
+              <TabsTrigger value="pending">
+                <Clock className="w-3 h-3 mr-1" />
+                Pending ({pending.length})
+              </TabsTrigger>
+              <TabsTrigger value="completed">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                Completed ({completed.length})
+              </TabsTrigger>
+            </TabsList>
+
+            <Link
+              href="/advertiser/create-ad"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Ad Campaign
+            </Link>
+          </div>
 
           <div className="mt-5">
             <TabsContent value="all">
