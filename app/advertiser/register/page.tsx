@@ -82,7 +82,7 @@ export default function CustomerRegistrationPage() {
 
   if (!isDesktop) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center p-6 bg-background text-foreground text-center">
+      <div className="flex-1 w-full flex flex-col items-center justify-center p-6 bg-background text-foreground text-center">
         <MonitorSmartphone className="w-16 h-16 text-muted-foreground mb-6" />
         <h2 className="text-2xl font-bold tracking-tight mb-2">Desktop Required</h2>
         <p className="text-muted-foreground max-w-sm">
@@ -93,26 +93,26 @@ export default function CustomerRegistrationPage() {
   }
 
   return (
-    <div className="h-screen bg-background text-foreground flex flex-col items-center py-6 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      <div className="w-full max-w-3xl mb-6 flex-shrink-0">
-        {/* Progress Tracker */}
-        <div className="flex items-center justify-between relative">
+    <div className="flex-1 flex flex-col bg-background text-foreground overflow-hidden">
+      {/* Progress Tracker */}
+      <div className="w-full px-6 lg:px-10 py-6 flex-shrink-0 border-b border-border">
+        <div className="max-w-screen-xl mx-auto flex items-center justify-between relative">
           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-[2px] bg-border -z-10" />
           {STEPS_CONFIG.map((step) => {
             const isActive = step.id === currentStep;
             const isCompleted = step.id < currentStep;
-            
+
             // For individual, skip Business and Directors visually
             if (data.accountType === "individual" && (step.id === 3 || step.id === 4)) return null;
 
             return (
               <div key={step.id} className="flex flex-col items-center relative z-10">
-                <div 
+                <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-colors duration-300 ${
-                    isActive 
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
-                      : isCompleted 
-                        ? "bg-foreground text-background" 
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                      : isCompleted
+                        ? "bg-foreground text-background"
                         : "bg-muted text-muted-foreground border border-border"
                   }`}
                 >
@@ -127,39 +127,38 @@ export default function CustomerRegistrationPage() {
         </div>
       </div>
 
-      <div className="w-full max-w-3xl bg-card rounded-2xl shadow-2xl border border-border overflow-hidden relative flex flex-col flex-1 min-h-0">
-        <div className="flex-1 overflow-y-auto">
-          <AnimatePresence mode="wait" custom={direction}>
-            <motion.div
-              key={currentStep}
-              custom={direction}
-              variants={variants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="p-6 sm:p-8 w-full h-full flex flex-col"
-            >
-              {currentStep === 1 && (
-                <StepAccountType data={data} onNext={handleNext} />
-              )}
-              {currentStep === 2 && (
-                <StepIdentity data={data} onNext={handleNext} onBack={handleBack} />
-              )}
-              {currentStep === 3 && (
-                <StepBusinessInfo data={data} onNext={handleNext} onBack={handleBack} />
-              )}
-              {currentStep === 4 && (
-                <StepDirectors data={data} onNext={handleNext} onBack={handleBack} />
-              )}
-              {currentStep === 5 && (
-                <StepBanking data={data} onNext={handleNext} onBack={handleBack} />
-              )}
-              {currentStep === 6 && (
-                <StepReview data={data} onBack={handleBack} onSubmit={handleSubmit} />
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+      {/* Form content — full width, scrollable */}
+      <div className="flex-1 overflow-y-auto">
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={currentStep}
+            custom={direction}
+            variants={variants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="max-w-screen-xl mx-auto px-6 lg:px-10 py-8 w-full flex flex-col"
+          >
+            {currentStep === 1 && (
+              <StepAccountType data={data} onNext={handleNext} />
+            )}
+            {currentStep === 2 && (
+              <StepIdentity data={data} onNext={handleNext} onBack={handleBack} />
+            )}
+            {currentStep === 3 && (
+              <StepBusinessInfo data={data} onNext={handleNext} onBack={handleBack} />
+            )}
+            {currentStep === 4 && (
+              <StepDirectors data={data} onNext={handleNext} onBack={handleBack} />
+            )}
+            {currentStep === 5 && (
+              <StepBanking data={data} onNext={handleNext} onBack={handleBack} />
+            )}
+            {currentStep === 6 && (
+              <StepReview data={data} onBack={handleBack} onSubmit={handleSubmit} />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

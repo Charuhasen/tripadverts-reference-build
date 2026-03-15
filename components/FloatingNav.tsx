@@ -24,12 +24,12 @@ export function FloatingNav() {
     {
       label: "Create Ad",
       icon: FilePlus,
-      href: "/campaigns/create",
+      href: "/advertiser/create-ad",
     },
     {
       label: "Register",
       icon: UserPlus,
-      href: "/customer-registration",
+      href: "/advertiser/register",
     },
   ];
 

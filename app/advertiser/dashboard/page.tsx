@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import {
   Clock,
   CheckCircle2,
@@ -17,6 +18,8 @@ import {
   Timer,
   DollarSign,
   Info,
+  Radio,
+  ArrowRight,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -512,6 +515,29 @@ function RateChip({ label, rate, tier }: { label: string; rate: number; tier: Ra
   );
 }
 
+function NetworkDemandCard() {
+  return (
+    <div className="mb-8">
+      <Link href="/advertiser/dashboard/network">
+        <Card className="transition-shadow hover:shadow-md group">
+          <CardContent className="px-5 py-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Radio className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold">Network Demand — Accra</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                View live taxi availability and zone capacity across the network
+              </p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
+          </CardContent>
+        </Card>
+      </Link>
+    </div>
+  );
+}
+
 function ZoneList({ zones }: { zones: CampaignZone[] }) {
   return (
     <div className="flex flex-wrap gap-2 mt-1">
@@ -723,22 +749,12 @@ export default function AdvertiserDashboardPage() {
     (a, c) => a + c.estimatedImpressions,
     0
   );
-  const totalRevenue = DEMO_CAMPAIGNS.reduce(
-    (a, c) => a + calcCampaignCost(c),
-    0
-  );
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-screen-xl mx-auto px-6 lg:px-10 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight">Advertiser Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Monitor your campaigns, booking schedules, and Proof of Play reports
-          </p>
-        </div>
+        <NetworkDemandCard />
 
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <SummaryCard
             label="Campaigns"
             value={String(DEMO_CAMPAIGNS.length)}
@@ -756,20 +772,6 @@ export default function AdvertiserDashboardPage() {
             value={formatNumber(totalPlays)}
             icon={Monitor}
             sub="completed campaigns"
-          />
-          <SummaryCard
-            label="Booked Days"
-            value={String(
-              DEMO_CAMPAIGNS.reduce((a, c) => a + uniqueDates(c.bookingSlots).length, 0)
-            )}
-            icon={Calendar}
-            sub="total scheduled"
-          />
-          <SummaryCard
-            label="Total Cost"
-            value={formatGHS(totalRevenue)}
-            icon={DollarSign}
-            sub="all campaigns"
           />
         </div>
 
