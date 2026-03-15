@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Home, UserPlus, FilePlus } from "lucide-react";
+import { Menu, X, Home, UserPlus, FilePlus, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -15,6 +15,11 @@ export function FloatingNav() {
       label: "Home",
       icon: Home,
       href: "/",
+    },
+    {
+      label: "Advertiser",
+      icon: LayoutDashboard,
+      href: "/advertiser/dashboard",
     },
     {
       label: "Create Ad",

@@ -35,6 +35,15 @@ import {
   Link2Off,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  getDayType,
+  calcTimeRangeCost,
+  getHourlyRates,
+  TIER_LABELS,
+  TIER_BG,
+  type DayType,
+  type RateTier,
+} from "@/lib/pricing";
 import type { DateRange } from "react-day-picker";
 
 const AccraZoneMap = dynamic(() => import("./AccraZoneMap"), {
@@ -184,8 +193,6 @@ export function StepCampaignTarget({ data, onNext, onBack }: Props) {
   }, [campaignDays, campaignDaysList, target.defaultTimeRange, target.dayTimeOverrides]);
 
   // Estimated metrics
-  // Cost model: GH₵ 15 per zone per hour of active delivery
-  const RATE_PER_ZONE_HOUR = 15; // GH₵
   const totalDailyImpressions = selectedZones.reduce(
     (sum, z) => sum + z.estimatedDailyImpressions,
     0
@@ -194,10 +201,17 @@ export function StepCampaignTarget({ data, onNext, onBack }: Props) {
   const estimatedImpressions = Math.round(
     totalDailyImpressions * campaignDays * slotFraction
   );
-  // Cost = number of zones × hours per day × campaign days × rate
-  const estimatedCost = Math.round(
-    selectedZones.length * avgHoursPerDay * campaignDays * RATE_PER_ZONE_HOUR
-  );
+  // Cost uses variable hourly rates based on day-of-week and time-of-day
+  const estimatedCost = useMemo(() => {
+    if (campaignDays === 0 || selectedZones.length === 0) return 0;
+    let total = 0;
+    for (const day of campaignDaysList) {
+      const [s, e] = getTimeRangeForDay(day, target.defaultTimeRange, target.dayTimeOverrides);
+      const dayType = getDayType(day);
+      total += calcTimeRangeCost(s, e, dayType, selectedZones.length);
+    }
+    return Math.round(total);
+  }, [campaignDays, campaignDaysList, selectedZones.length, target.defaultTimeRange, target.dayTimeOverrides]);
   // Compact formatter for impressions only (e.g. 4.5K, 1.2M)
   const formatImpressions = (n: number): string => {
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`;
@@ -481,9 +495,9 @@ export function StepCampaignTarget({ data, onNext, onBack }: Props) {
           </div>
         ) : (
           /* Step 2: Daily Time Window panel */
-          <div className="flex-1 min-h-0 overflow-y-auto">
-            <Card className="h-full">
-              <CardHeader className="pb-3">
+          <div className="flex-1 min-h-0 flex flex-col">
+            <Card className="flex flex-col min-h-0 h-full">
+              <CardHeader className="pb-3 flex-shrink-0">
                 <CardTitle className="text-base flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Clock className="size-5 text-primary" />
@@ -510,13 +524,15 @@ export function StepCampaignTarget({ data, onNext, onBack }: Props) {
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-4">
                 {campaignDays === 0 ? (
                   <p className="text-sm text-muted-foreground">Select dates on the left to configure time windows.</p>
                 ) : campaignDays === 1 ? (
                   <TimeRangeSlider
                     label={formatDateShort(campaignDaysList[0])}
+                    dateStr={campaignDaysList[0]}
                     value={target.defaultTimeRange}
+                    zoneCount={selectedZones.length}
                     onChange={(range) =>
                       setTarget((prev) => ({ ...prev, defaultTimeRange: range, dayTimeOverrides: {} }))
                     }
@@ -529,7 +545,9 @@ export function StepCampaignTarget({ data, onNext, onBack }: Props) {
                         <TimeRangeSlider
                           key={day}
                           label={formatDateShort(day)}
+                          dateStr={day}
                           value={range}
+                          zoneCount={selectedZones.length}
                           onChange={(newRange) => {
                             if (linkedDays) {
                               setTarget((prev) => ({
@@ -598,19 +616,39 @@ export function StepCampaignTarget({ data, onNext, onBack }: Props) {
 
 function TimeRangeSlider({
   label,
+  dateStr,
   value,
+  zoneCount,
   onChange,
 }: {
   label: string;
+  dateStr?: string;
   value: TimeRange;
+  zoneCount: number;
   onChange: (range: TimeRange) => void;
 }) {
   const hours = value[1] - value[0];
+  const dayType: DayType = dateStr ? getDayType(dateStr) : "weekday";
+  const hourlyRates = getHourlyRates(dayType);
+  const slotCost = calcTimeRangeCost(value[0], value[1], dayType, zoneCount);
+
+  // Build rate segments for the visual bar (group consecutive hours with the same tier)
+  const segments: { start: number; end: number; tier: RateTier; rate: number }[] = [];
+  for (let h = 0; h < 24; h++) {
+    const hr = hourlyRates[h];
+    const last = segments[segments.length - 1];
+    if (last && last.tier === hr.tier && last.rate === hr.rate) {
+      last.end = h + 1;
+    } else {
+      segments.push({ start: h, end: h + 1, tier: hr.tier, rate: hr.rate });
+    }
+  }
 
   return (
     <div className="space-y-2">
+      {/* Header: label, time range, cost */}
       <div className="flex items-center justify-between">
-        <span className="text-sm text-foreground">
+        <span className="text-sm text-foreground font-medium">
           {label}
         </span>
         <div className="flex items-center gap-2">
@@ -620,23 +658,80 @@ function TimeRangeSlider({
           <span className="text-xs text-muted-foreground">
             ({hours}h)
           </span>
+          {zoneCount > 0 && (
+            <span className="text-xs font-bold text-primary ml-1">
+              GH₵{slotCost.toLocaleString()}
+            </span>
+          )}
         </div>
       </div>
-      <Slider
-        min={0}
-        max={24}
-        step={1}
-        value={[value[0], value[1]]}
-        onValueChange={([start, end]: [number, number]) => {
-          if (end - start < 1) return;
-          onChange([start, end] as TimeRange);
-        }}
-        aria-label={`Time range for ${label}`}
-      />
-      <div className="flex justify-between text-xs text-muted-foreground">
-        <span>00:00</span>
-        <span>12:00</span>
-        <span>24:00</span>
+
+      {/* Rate tier bar — shows pricing bands behind the slider */}
+      <div className="relative">
+        {/* Color-coded rate bar with hourly prices */}
+        <div className="flex h-7 rounded-md overflow-hidden mb-1 border border-border">
+          {segments.map((seg) => {
+            const widthPct = ((seg.end - seg.start) / 24) * 100;
+            const inRange = seg.end > value[0] && seg.start < value[1];
+            const isPeak = seg.tier !== "off-peak";
+            return (
+              <div
+                key={`${seg.start}-${seg.rate}`}
+                className={cn(
+                  "flex items-center justify-center transition-opacity border-r border-white/10 last:border-r-0",
+                  TIER_BG[seg.tier],
+                  inRange ? "opacity-100" : "opacity-20"
+                )}
+                style={{ width: `${widthPct}%` }}
+                title={`${formatHour(seg.start)}–${formatHour(seg.end)}: ${TIER_LABELS[seg.tier]} (GH₵${seg.rate}/hr)`}
+              >
+                {widthPct > 8 && (
+                  <span className={cn(
+                    "text-[9px] font-bold leading-none",
+                    isPeak ? "text-white" : "text-zinc-700"
+                  )}>
+                    GH₵{seg.rate}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Slider */}
+        <Slider
+          min={0}
+          max={24}
+          step={1}
+          value={[value[0], value[1]]}
+          onValueChange={([start, end]: [number, number]) => {
+            if (end - start < 1) return;
+            onChange([start, end] as TimeRange);
+          }}
+          aria-label={`Time range for ${label}`}
+        />
+      </div>
+
+      {/* Timeline labels with legend */}
+      <div className="flex items-center justify-between">
+        <div className="flex justify-between text-[10px] text-muted-foreground flex-1">
+          <span>00:00</span>
+          <span>06:00</span>
+          <span>12:00</span>
+          <span>18:00</span>
+          <span>24:00</span>
+        </div>
+        <div className="flex items-center gap-2 ml-3">
+          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="w-2 h-2 rounded-sm bg-orange-500 inline-block" /> Peak
+          </span>
+          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="w-2 h-2 rounded-sm bg-pink-600 inline-block" /> Fri/Sat Night
+          </span>
+          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="w-2 h-2 rounded-sm bg-zinc-400/80 inline-block" /> Off-Peak
+          </span>
+        </div>
       </div>
     </div>
   );
