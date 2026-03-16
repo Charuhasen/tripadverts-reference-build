@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FilePlus, UserPlus, ChevronDown, User, ScanFace } from "lucide-react";
+import { LayoutDashboard, FilePlus, UserPlus, ChevronDown, User, ScanFace, Truck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ADVERTISER_ITEMS = [
@@ -53,6 +53,19 @@ export function Navbar() {
           >
             <ScanFace className="w-3.5 h-3.5" />
             Face Detection
+          </Link>
+
+          <Link
+            href="/fleet"
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap",
+              pathname.startsWith("/fleet")
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            )}
+          >
+            <Truck className="w-3.5 h-3.5" />
+            Fleet
           </Link>
 
           <div className="relative" ref={dropdownRef}>
