@@ -175,13 +175,6 @@ export function StepCampaignTarget({ data, onNext, onBack, onNavChange, submitRe
 
   const campaignDays = campaignDaysList.length;
 
-  // Validation
-  const hasCity = target.city !== "";
-  const hasZones = target.selectedZoneIds.length > 0;
-  const hasDates = target.startDate !== "" && target.endDate !== "";
-  const datesValid = hasDates && target.endDate >= target.startDate;
-  const hasTimeRange = target.defaultTimeRange[1] > target.defaultTimeRange[0];
-  const canProceed = hasCity && hasZones && datesValid && hasTimeRange;
 
   // Average hours per day for estimates (accounting for overrides)
   const avgHoursPerDay = useMemo(() => {
@@ -228,28 +221,20 @@ export function StepCampaignTarget({ data, onNext, onBack, onNavChange, submitRe
   const [panelStep, setPanelStep] = useState(0);
   const PANEL_STEPS = ["Location", "Zones", "Schedule"] as const;
 
-  const panelStepValid = [
-    hasCity,
-    hasZones,
-    datesValid && hasTimeRange,
-  ];
-
-  const canAdvancePanel = panelStepValid[panelStep];
   const isLastPanelStep = panelStep === PANEL_STEPS.length - 1;
 
   useEffect(() => {
-    const valid = isLastPanelStep ? canProceed : canAdvancePanel;
     const label = isLastPanelStep ? "Next: Payment" : "Next";
-    onNavChange?.({ canProceed: valid, nextLabel: label });
-  }, [canProceed, canAdvancePanel, isLastPanelStep, onNavChange]);
+    onNavChange?.({ canProceed: true, nextLabel: label });
+  }, [isLastPanelStep, onNavChange]);
 
   useEffect(() => {
     if (submitRef) {
       submitRef.current = () => {
         if (isLastPanelStep) {
-          if (canProceed) onNext(target);
+          onNext(target);
         } else {
-          if (canAdvancePanel) setPanelStep((s) => s + 1);
+          setPanelStep((s) => s + 1);
         }
       };
     }
@@ -286,11 +271,11 @@ export function StepCampaignTarget({ data, onNext, onBack, onNavChange, submitRe
             {PANEL_STEPS.map((label, i) => (
               <div key={label} className="flex items-center gap-2">
                 <button
-                  onClick={() => i < panelStep || panelStepValid[i - 1] ? setPanelStep(i) : null}
+                  onClick={() => setPanelStep(i)}
                   className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
                     i === panelStep
                       ? "text-primary"
-                      : panelStepValid[i]
+                      : i < panelStep
                       ? "text-muted-foreground hover:text-foreground cursor-pointer"
                       : "text-muted-foreground/40 cursor-default"
                   }`}
@@ -298,11 +283,11 @@ export function StepCampaignTarget({ data, onNext, onBack, onNavChange, submitRe
                   <span className={`size-5 rounded-full flex items-center justify-center text-xs font-bold border transition-all ${
                     i === panelStep
                       ? "bg-primary text-primary-foreground border-primary"
-                      : panelStepValid[i]
+                      : i < panelStep
                       ? "bg-muted border-border text-muted-foreground"
                       : "border-border/40 text-muted-foreground/40"
                   }`}>
-                    {panelStepValid[i] && i !== panelStep ? "✓" : i + 1}
+                    {i < panelStep ? "✓" : i + 1}
                   </span>
                   {label}
                 </button>
@@ -445,7 +430,7 @@ export function StepCampaignTarget({ data, onNext, onBack, onNavChange, submitRe
                       disabled={{ before: new Date() }}
                     />
                   </div>
-                  {hasDates && datesValid && (
+                  {target.startDate && target.endDate && target.endDate >= target.startDate && (
                     <p className="text-sm text-center text-muted-foreground">
                       {formatDateShort(target.startDate)} — {formatDateShort(target.endDate)}
                       {" · "}

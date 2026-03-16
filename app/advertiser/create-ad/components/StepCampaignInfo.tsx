@@ -30,20 +30,15 @@ export function StepCampaignInfo({ data, onNext, onNavChange, submitRef }: Props
   const [videoDuration, setVideoDuration] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const nameValid = info.name.trim().length >= 3 && info.name.length <= 120;
-  const objectiveValid = info.objective !== "";
   const hasContent = !!info.adContent.previewUrl;
-  const canProceed = nameValid && objectiveValid && hasContent;
 
   useEffect(() => {
-    onNavChange?.({ canProceed, nextLabel: "Next: Targeting" });
-  }, [canProceed, onNavChange]);
+    onNavChange?.({ canProceed: true, nextLabel: "Next: Targeting" });
+  }, [onNavChange]);
 
   useEffect(() => {
     if (submitRef) {
-      submitRef.current = () => {
-        if (canProceed) onNext(info);
-      };
+      submitRef.current = () => { onNext(info); };
     }
   });
 
@@ -51,9 +46,7 @@ export function StepCampaignInfo({ data, onNext, onNavChange, submitRef }: Props
     ? Math.ceil(Math.round(videoDuration) / SLOT_DURATION)
     : info.adContent.type === "image" ? 1 : null;
 
-  const handleNext = () => {
-    if (canProceed) onNext(info);
-  };
+  const handleNext = () => { onNext(info); };
 
   const handleFile = (file: File) => {
     const isVideo = file.type.startsWith("video/");
@@ -105,7 +98,7 @@ export function StepCampaignInfo({ data, onNext, onNavChange, submitRef }: Props
       <div className="flex gap-4 mb-3 flex-shrink-0">
         <div className="flex-1 space-y-1.5">
           <Label htmlFor="campaign-name" className="text-xs font-semibold">
-            Campaign Name <span className="text-destructive">*</span>
+            Campaign Name
           </Label>
           <Input
             id="campaign-name"
@@ -115,13 +108,10 @@ export function StepCampaignInfo({ data, onNext, onNavChange, submitRef }: Props
             maxLength={120}
             className="h-9"
           />
-          {info.name.length > 0 && info.name.trim().length < 3 && (
-            <p className="text-[10px] text-destructive">Minimum 3 characters</p>
-          )}
         </div>
         <div className="w-[200px] space-y-1.5">
           <Label htmlFor="campaign-objective" className="text-xs font-semibold">
-            Objective <span className="text-destructive">*</span>
+            Objective
           </Label>
           <Select
             value={info.objective}

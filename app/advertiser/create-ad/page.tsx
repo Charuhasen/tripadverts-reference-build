@@ -192,7 +192,7 @@ export default function CreateCampaignPage() {
           <div className="min-w-[120px] flex justify-end">
             <Button
               size="sm"
-              disabled={!navState.canProceed || navState.processing}
+              disabled={navState.processing}
               onClick={() => submitRef.current?.()}
             >
               {navState.processing ? (

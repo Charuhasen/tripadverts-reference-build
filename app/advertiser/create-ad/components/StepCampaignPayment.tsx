@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import confetti from "canvas-confetti";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -92,12 +93,7 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit, onNavCha
     campaignTarget.taxiCount * campaignDays * avgHoursPerDay * 0.75
   );
 
-  const momoValid =
-    pay.method !== "momo" || /^0[235]\d{8}$/.test(pay.momoPhone.replace(/\s/g, ""));
-  const canPay = pay.method !== "" && (pay.method === "stripe" || momoValid);
-
   const handlePay = () => {
-    if (!canPay) return;
     setProcessing(true);
     onNavChange?.({ canProceed: false, nextLabel: `Pay $${estimatedCost.toLocaleString()}`, processing: true });
     // Simulate payment processing
@@ -109,17 +105,29 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit, onNavCha
 
   useEffect(() => {
     onNavChange?.({
-      canProceed: canPay && !processing,
+      canProceed: !processing,
       nextLabel: `Pay $${estimatedCost.toLocaleString()}`,
       processing,
     });
-  }, [canPay, processing, estimatedCost, onNavChange]);
+  }, [processing, estimatedCost, onNavChange]);
 
   useEffect(() => {
     if (submitRef) {
       submitRef.current = handlePay;
     }
   });
+
+  // Fire confetti when payment is confirmed
+  useEffect(() => {
+    if (!confirmed) return;
+    const fire = (opts: confetti.Options) => confetti({ startVelocity: 30, spread: 60, ticks: 80, zIndex: 9999, ...opts });
+    fire({ particleCount: 60, angle: 60, origin: { x: 0, y: 0.65 } });
+    fire({ particleCount: 60, angle: 120, origin: { x: 1, y: 0.65 } });
+    const t = setTimeout(() => {
+      fire({ particleCount: 30, angle: 90, origin: { x: 0.5, y: 0.5 }, startVelocity: 20 });
+    }, 300);
+    return () => clearTimeout(t);
+  }, [confirmed]);
 
   // Confirmation screen
   if (confirmed) {
@@ -304,11 +312,6 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit, onNavCha
                     setPay((prev) => ({ ...prev, momoPhone: e.target.value }))
                   }
                 />
-                {pay.momoPhone && !momoValid && (
-                  <p className="text-xs text-destructive">
-                    Enter a valid Ghana mobile number
-                  </p>
-                )}
                 <p className="text-xs text-muted-foreground">
                   A payment prompt will be sent to your phone for approval.
                 </p>
