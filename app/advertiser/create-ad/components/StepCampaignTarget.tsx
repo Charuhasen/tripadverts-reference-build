@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
@@ -22,8 +21,6 @@ import {
   getZonesForCity,
 } from "@/lib/schemas/campaignData";
 import {
-  ArrowLeft,
-  ArrowRight,
   Eye,
   X,
   Clock,
@@ -56,10 +53,15 @@ const AccraZoneMap = dynamic(() => import("./AccraZoneMap"), {
   ),
 });
 
+import type { StepNavState } from "../page";
+
 interface Props {
   data: CampaignTarget;
   onNext: (data: CampaignTarget) => void;
   onBack: () => void;
+  onNavChange?: (state: StepNavState) => void;
+  submitRef?: React.MutableRefObject<(() => void) | null>;
+  stepBackRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 
@@ -94,7 +96,7 @@ function getTimeRangeForDay(
   return overrides[day] ?? defaultRange;
 }
 
-export function StepCampaignTarget({ data, onNext, onBack }: Props) {
+export function StepCampaignTarget({ data, onNext, onBack, onNavChange, submitRef, stepBackRef }: Props) {
   const [target, setTarget] = useState<CampaignTarget>(data);
   const [hoveredZoneId, setHoveredZoneId] = useState<string | null>(null);
   // When true, editing any day syncs all days to the same time range
@@ -235,12 +237,41 @@ export function StepCampaignTarget({ data, onNext, onBack }: Props) {
   const canAdvancePanel = panelStepValid[panelStep];
   const isLastPanelStep = panelStep === PANEL_STEPS.length - 1;
 
+  useEffect(() => {
+    const valid = isLastPanelStep ? canProceed : canAdvancePanel;
+    const label = isLastPanelStep ? "Next: Payment" : "Next";
+    onNavChange?.({ canProceed: valid, nextLabel: label });
+  }, [canProceed, canAdvancePanel, isLastPanelStep, onNavChange]);
+
+  useEffect(() => {
+    if (submitRef) {
+      submitRef.current = () => {
+        if (isLastPanelStep) {
+          if (canProceed) onNext(target);
+        } else {
+          if (canAdvancePanel) setPanelStep((s) => s + 1);
+        }
+      };
+    }
+  });
+
+  useEffect(() => {
+    if (stepBackRef) {
+      stepBackRef.current = panelStep > 0
+        ? () => setPanelStep((s) => s - 1)
+        : null;
+    }
+    return () => {
+      if (stepBackRef) stepBackRef.current = null;
+    };
+  }, [panelStep, stepBackRef]);
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="mb-5 flex-shrink-0">
-        <h2 className="text-2xl font-bold tracking-tight">Campaign Targeting</h2>
-        <p className="text-muted-foreground mt-1">
+      <div className="mb-3 flex-shrink-0">
+        <h2 className="text-lg font-bold tracking-tight">Campaign Targeting</h2>
+        <p className="text-sm text-muted-foreground">
           Select zones on the map, then configure delivery settings.
         </p>
       </div>
@@ -575,39 +606,6 @@ export function StepCampaignTarget({ data, onNext, onBack }: Props) {
         )}
       </div>
 
-      {/* Navigation */}
-      <div className="flex justify-between pt-4 border-t border-border mt-4 flex-shrink-0">
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={panelStep === 0 ? onBack : () => setPanelStep((s) => s - 1)}
-        >
-          <ArrowLeft className="mr-2 size-4" />
-          Back
-        </Button>
-
-        {isLastPanelStep ? (
-          <Button
-            size="lg"
-            className="px-8"
-            disabled={!canProceed}
-            onClick={() => onNext(target)}
-          >
-            Next: Payment
-            <ArrowRight className="ml-2 size-4" />
-          </Button>
-        ) : (
-          <Button
-            size="lg"
-            className="px-8"
-            disabled={!canAdvancePanel}
-            onClick={() => setPanelStep((s) => s + 1)}
-          >
-            Next
-            <ArrowRight className="ml-2 size-4" />
-          </Button>
-        )}
-      </div>
     </div>
   );
 }

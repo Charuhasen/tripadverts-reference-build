@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, MonitorSmartphone, X } from "lucide-react";
+import { Check, MonitorSmartphone, X, ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -18,6 +18,12 @@ import { StepCampaignInfo } from "./components/StepCampaignInfo";
 import { StepCampaignTarget } from "./components/StepCampaignTarget";
 import { StepCampaignPayment } from "./components/StepCampaignPayment";
 
+export interface StepNavState {
+  canProceed: boolean;
+  nextLabel: string;
+  processing?: boolean;
+}
+
 const STEPS = [
   { id: 1, title: "Campaign Info" },
   { id: 2, title: "Targeting" },
@@ -30,8 +36,15 @@ export default function CreateCampaignPage() {
   const [direction, setDirection] = useState(1);
   const [mounted, setMounted] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
+  const [navState, setNavState] = useState<StepNavState>({ canProceed: false, nextLabel: "Next" });
+  const submitRef = useRef<(() => void) | null>(null);
+  const stepBackRef = useRef<(() => void) | null>(null);
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const router = useRouter();
+
+  const handleNavChange = useCallback((state: StepNavState) => {
+    setNavState(state);
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -119,58 +132,90 @@ export default function CreateCampaignPage() {
 
   return (
     <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
-      {/* Progress Indicator */}
-      <div className="w-full flex-shrink-0 border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="max-w-screen-2xl mx-auto px-6 lg:px-10 py-4 relative">
-          {/* Exit button */}
-          <button
-            onClick={() => setShowExitDialog(true)}
-            className="absolute right-6 lg:right-10 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-            Exit
-          </button>
+      {/* Progress bar + Navigation */}
+      <div className="w-full flex-shrink-0 border-b border-border">
+        <div className="max-w-screen-2xl mx-auto px-6 lg:px-10 flex items-center h-11 gap-4">
+          {/* Left: Back + Exit */}
+          <div className="flex items-center gap-3 min-w-[120px]">
+            {(currentStep > 1 || stepBackRef.current) && (
+              <button
+                onClick={() => {
+                  if (stepBackRef.current) {
+                    stepBackRef.current();
+                  } else {
+                    handleBack();
+                  }
+                }}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Back
+              </button>
+            )}
+            <button
+              onClick={() => setShowExitDialog(true)}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+              Exit
+            </button>
+          </div>
 
-          <div className="flex items-start justify-center max-w-2xl mx-auto">
+          {/* Center: Steps */}
+          <div className="flex-1 flex items-center justify-center gap-1 text-xs">
             {STEPS.map((step, index) => {
               const isActive = step.id === currentStep;
               const isCompleted = step.id < currentStep;
-              const isLast = index === STEPS.length - 1;
-
               return (
-                <div key={step.id} className="flex-1 flex flex-col items-center relative gap-2">
-                  {/* Connecting Line */}
-                  {!isLast && (
-                    <div className="absolute top-4 left-[50%] w-full h-[2px] -z-10 bg-border" />
+                <div key={step.id} className="flex items-center gap-1">
+                  {index > 0 && (
+                    <span className={cn(
+                      "w-4 h-px mx-1",
+                      isCompleted ? "bg-primary" : "bg-border"
+                    )} />
                   )}
-                  
-                  {/* Step Node */}
-                  <div
-                    className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-colors duration-300 z-10 bg-card ring-4 ring-card",
-                      isActive
-                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 ring-primary/20"
-                        : isCompleted
-                          ? "bg-primary/10 text-primary border border-primary/20"
-                          : "bg-muted text-muted-foreground border border-border"
-                    )}
-                  >
-                    {isCompleted ? <Check className="w-4 h-4" /> : step.id}
-                  </div>
-                  
-                  {/* Step Label */}
-                  <span
-                    className={cn(
-                      "text-xs font-semibold tracking-wide text-center",
-                      isActive ? "text-foreground" : "text-muted-foreground"
-                    )}
-                  >
-                    {step.title}
+                  <span className={cn(
+                    "font-medium transition-colors",
+                    isActive ? "text-foreground" :
+                    isCompleted ? "text-primary" :
+                    "text-muted-foreground"
+                  )}>
+                    {isCompleted ? <Check className="w-3.5 h-3.5 inline" /> : null}
+                    {isCompleted ? "" : `${step.id}. `}{step.title}
                   </span>
                 </div>
               );
             })}
           </div>
+
+          {/* Right: Next */}
+          <div className="min-w-[120px] flex justify-end">
+            <Button
+              size="sm"
+              disabled={!navState.canProceed || navState.processing}
+              onClick={() => submitRef.current?.()}
+            >
+              {navState.processing ? (
+                <>
+                  <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  {navState.nextLabel}
+                  <ArrowRight className="ml-1.5 size-3.5" />
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="h-0.5 bg-border">
+          <div
+            className="h-full bg-primary transition-all duration-300"
+            style={{ width: `${(currentStep / STEPS.length) * 100}%` }}
+          />
         </div>
       </div>
 
@@ -186,11 +231,13 @@ export default function CreateCampaignPage() {
             exit="exit"
             className="h-full flex flex-col"
           >
-            <div className="flex-1 min-h-0 max-w-screen-2xl mx-auto w-full px-6 lg:px-10 py-6 flex flex-col">
+            <div className="flex-1 min-h-0 max-w-screen-2xl mx-auto w-full px-6 lg:px-10 py-3 flex flex-col">
               {currentStep === 1 && (
                 <StepCampaignInfo
                   data={draft.campaignInfo}
                   onNext={handleInfoNext}
+                  onNavChange={handleNavChange}
+                  submitRef={submitRef}
                 />
               )}
               {currentStep === 2 && (
@@ -198,6 +245,9 @@ export default function CreateCampaignPage() {
                   data={draft.campaignTarget}
                   onNext={handleTargetNext}
                   onBack={handleBack}
+                  onNavChange={handleNavChange}
+                  submitRef={submitRef}
+                  stepBackRef={stepBackRef}
                 />
               )}
               {currentStep === 3 && (
@@ -206,6 +256,8 @@ export default function CreateCampaignPage() {
                   payment={draft.campaignPayment}
                   onBack={handleBack}
                   onSubmit={handlePaymentSubmit}
+                  onNavChange={handleNavChange}
+                  submitRef={submitRef}
                 />
               )}
             </div>

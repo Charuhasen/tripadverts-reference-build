@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,6 @@ import {
   getZonesForCity,
 } from "@/lib/schemas/campaignData";
 import {
-  ArrowLeft,
   Check,
   CreditCard,
   Smartphone,
@@ -26,19 +25,22 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { StepNavState } from "../page";
 
 interface Props {
   draft: CampaignDraft;
   payment: CampaignPayment;
   onBack: () => void;
   onSubmit: (payment: CampaignPayment) => void;
+  onNavChange?: (state: StepNavState) => void;
+  submitRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 function formatHour(hour: number) {
   return `${hour.toString().padStart(2, "0")}:00`;
 }
 
-export function StepCampaignPayment({ draft, payment, onBack, onSubmit }: Props) {
+export function StepCampaignPayment({ draft, payment, onBack, onSubmit, onNavChange, submitRef }: Props) {
   const [pay, setPay] = useState<CampaignPayment>(payment);
   const [processing, setProcessing] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
@@ -97,6 +99,7 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit }: Props)
   const handlePay = () => {
     if (!canPay) return;
     setProcessing(true);
+    onNavChange?.({ canProceed: false, nextLabel: `Pay $${estimatedCost.toLocaleString()}`, processing: true });
     // Simulate payment processing
     setTimeout(() => {
       setProcessing(false);
@@ -104,20 +107,34 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit }: Props)
     }, 2500);
   };
 
+  useEffect(() => {
+    onNavChange?.({
+      canProceed: canPay && !processing,
+      nextLabel: `Pay $${estimatedCost.toLocaleString()}`,
+      processing,
+    });
+  }, [canPay, processing, estimatedCost, onNavChange]);
+
+  useEffect(() => {
+    if (submitRef) {
+      submitRef.current = handlePay;
+    }
+  });
+
   // Confirmation screen
   if (confirmed) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center py-12">
-        <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-6">
-          <CheckCircle2 className="size-8 text-green-500" />
+      <div className="flex flex-col items-center justify-center h-full text-center">
+        <div className="w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center mb-4">
+          <CheckCircle2 className="size-7 text-green-500" />
         </div>
-        <h2 className="text-2xl font-bold tracking-tight mb-2">Campaign Created!</h2>
-        <p className="text-muted-foreground mb-8 max-w-md">
+        <h2 className="text-xl font-bold tracking-tight mb-2">Campaign Created!</h2>
+        <p className="text-muted-foreground mb-6 max-w-md">
           Your campaign <strong>"{campaignInfo.name}"</strong> has been successfully created
           and payment has been confirmed.
         </p>
 
-        <div className="bg-card border border-border rounded-xl p-6 w-full max-w-md text-left space-y-3">
+        <div className="bg-card border border-border rounded-xl p-5 w-full max-w-md text-left space-y-2.5">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Campaign ID</span>
             <span className="font-mono font-semibold">CMP-{Date.now().toString(36).toUpperCase()}</span>
@@ -145,7 +162,7 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit }: Props)
           </div>
         </div>
 
-        <Button size="lg" className="mt-8 px-8" onClick={() => (window.location.href = "/")}>
+        <Button size="sm" className="mt-5 px-6" onClick={() => (window.location.href = "/")}>
           Go to Dashboard
         </Button>
       </div>
@@ -154,22 +171,22 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit }: Props)
 
   return (
     <div className="flex flex-col h-full">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold tracking-tight">Campaign Payment</h2>
-        <p className="text-muted-foreground mt-1">
+      <div className="mb-3">
+        <h2 className="text-lg font-bold tracking-tight">Campaign Payment</h2>
+        <p className="text-sm text-muted-foreground">
           Review your campaign details and complete payment.
         </p>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="grid lg:grid-cols-2 gap-8 max-w-5xl">
+        <div className="grid lg:grid-cols-2 gap-6 max-w-5xl">
           {/* Campaign Summary */}
           <div className="space-y-4">
             <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
               Campaign Summary
             </h3>
 
-            <div className="bg-muted/30 rounded-xl border border-border p-5 space-y-4">
+            <div className="bg-muted/30 rounded-xl border border-border p-4 space-y-3">
               <div>
                 <span className="text-xs text-muted-foreground">Campaign Name</span>
                 <p className="font-semibold">{campaignInfo.name}</p>
@@ -253,7 +270,7 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit }: Props)
             <button
               onClick={() => setPay((prev) => ({ ...prev, method: "momo" }))}
               className={cn(
-                "w-full text-left p-5 rounded-xl border transition-all",
+                "w-full text-left p-4 rounded-xl border transition-all",
                 pay.method === "momo"
                   ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                   : "border-border hover:border-primary/40"
@@ -261,7 +278,7 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit }: Props)
               aria-pressed={pay.method === "momo"}
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-lg bg-yellow-500/10 flex items-center justify-center">
                   <Smartphone className="size-5 text-yellow-500" />
                 </div>
                 <div>
@@ -302,7 +319,7 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit }: Props)
             <button
               onClick={() => setPay((prev) => ({ ...prev, method: "stripe" }))}
               className={cn(
-                "w-full text-left p-5 rounded-xl border transition-all",
+                "w-full text-left p-4 rounded-xl border transition-all",
                 pay.method === "stripe"
                   ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                   : "border-border hover:border-primary/40"
@@ -310,7 +327,7 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit }: Props)
               aria-pressed={pay.method === "stripe"}
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
                   <CreditCard className="size-5 text-blue-500" />
                 </div>
                 <div>
@@ -334,7 +351,7 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit }: Props)
             )}
 
             {/* Total */}
-            <div className="rounded-xl bg-primary/5 border border-primary/20 p-5 mt-4">
+            <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 mt-3">
               <div className="flex justify-between items-center">
                 <span className="font-medium">Total Amount</span>
                 <span className="text-2xl font-bold">${estimatedCost.toLocaleString()}</span>
@@ -344,31 +361,6 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit }: Props)
         </div>
       </div>
 
-      {/* Navigation */}
-      <div className="flex justify-between pt-6 border-t border-border mt-6">
-        <Button variant="outline" size="lg" onClick={onBack}>
-          <ArrowLeft className="mr-2 size-4" />
-          Back
-        </Button>
-        <Button
-          size="lg"
-          className="px-8"
-          disabled={!canPay || processing}
-          onClick={handlePay}
-        >
-          {processing ? (
-            <>
-              <Loader2 className="mr-2 size-4 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            <>
-              Pay ${estimatedCost.toLocaleString()}
-              <Check className="ml-2 size-4" />
-            </>
-          )}
-        </Button>
-      </div>
     </div>
   );
 }

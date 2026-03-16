@@ -23,7 +23,7 @@ const DEMAND_STYLES: Record<DemandLevel, { color: string; fillColor: string }> =
 const DEMAND_LABELS: Record<DemandLevel, string> = {
   high: "High Demand",
   medium: "Medium Demand",
-  low: "Low Availability",
+  low: "Available",
 };
 
 function FitBounds({ zones }: { zones: Zone[] }) {
@@ -45,13 +45,27 @@ function FitBounds({ zones }: { zones: Zone[] }) {
   return null;
 }
 
+function FlyToZone({ zone }: { zone: Zone | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!zone) return;
+    map.flyTo(zone.center, 14, { duration: 0.8 });
+  }, [zone, map]);
+  return null;
+}
+
 interface Props {
   zoneDemands: ZoneDemand[];
   center: [number, number];
   zoom: number;
+  focusedZoneId?: string | null;
 }
 
-export default function NetworkDemandMap({ zoneDemands, center, zoom }: Props) {
+export default function NetworkDemandMap({ zoneDemands, center, zoom, focusedZoneId }: Props) {
+  const focusedZone = focusedZoneId
+    ? zoneDemands.find((zd) => zd.zone.id === focusedZoneId)?.zone ?? null
+    : null;
+
   return (
     <div className="w-full h-full min-h-[500px] relative">
       <MapContainer
@@ -66,28 +80,27 @@ export default function NetworkDemandMap({ zoneDemands, center, zoom }: Props) {
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
         />
         <FitBounds zones={zoneDemands.map((zd) => zd.zone)} />
+        <FlyToZone zone={focusedZone} />
         {zoneDemands.map((zd) => {
           const style = DEMAND_STYLES[zd.demand];
           const available = zd.zone.availableTaxis - zd.bookedTaxis;
+          const isFocused = zd.zone.id === focusedZoneId;
           return (
             <Polygon
               key={zd.zone.id}
               positions={zd.zone.polygon}
               pathOptions={{
-                color: style.color,
-                fillColor: style.fillColor,
-                fillOpacity: zd.demand === "high" ? 0.45 : zd.demand === "medium" ? 0.35 : 0.25,
-                weight: 2,
+                color: isFocused ? "#3b82f6" : style.color,
+                fillColor: isFocused ? "#3b82f6" : style.fillColor,
+                fillOpacity: isFocused ? 0.5 : zd.demand === "high" ? 0.45 : zd.demand === "medium" ? 0.35 : 0.25,
+                weight: isFocused ? 3 : 2,
               }}
             >
               <Tooltip direction="top" sticky>
                 <div className="text-xs space-y-0.5">
                   <p className="font-bold">{zd.zone.name}</p>
-                  <p>{zd.zone.category} · {zd.zone.trafficDensity} traffic</p>
-                  <p>{zd.zone.availableTaxis} total taxis</p>
-                  <p className="font-medium">
-                    {zd.bookedTaxis} booked · {available} available
-                  </p>
+                  <p>{zd.zone.availableTaxis} total · {available} available</p>
+                  <p>~{zd.zone.estimatedDailyImpressions.toLocaleString()} daily impressions</p>
                   <p>{zd.activeCampaigns} active campaign{zd.activeCampaigns !== 1 ? "s" : ""}</p>
                   <p className="font-semibold mt-1" style={{ color: style.color }}>
                     {DEMAND_LABELS[zd.demand]}
@@ -101,16 +114,16 @@ export default function NetworkDemandMap({ zoneDemands, center, zoom }: Props) {
 
       {/* Legend */}
       <div className="absolute bottom-3 left-3 z-[1000] bg-card/90 backdrop-blur-sm border border-border rounded-lg px-3 py-2 space-y-1">
-        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Network Demand</p>
-        <div className="flex flex-col gap-1">
-          <span className="flex items-center gap-1.5 text-xs">
-            <span className="w-3 h-3 rounded-sm bg-red-500/60 border border-red-500" /> High Demand
+        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Demand</p>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5 text-[10px]">
+            <span className="w-2.5 h-2.5 rounded-sm bg-red-500/60 border border-red-500" /> High
           </span>
-          <span className="flex items-center gap-1.5 text-xs">
-            <span className="w-3 h-3 rounded-sm bg-amber-400/50 border border-amber-500" /> Medium
+          <span className="flex items-center gap-1.5 text-[10px]">
+            <span className="w-2.5 h-2.5 rounded-sm bg-amber-400/50 border border-amber-500" /> Medium
           </span>
-          <span className="flex items-center gap-1.5 text-xs">
-            <span className="w-3 h-3 rounded-sm bg-green-500/40 border border-green-500" /> Available
+          <span className="flex items-center gap-1.5 text-[10px]">
+            <span className="w-2.5 h-2.5 rounded-sm bg-green-500/40 border border-green-500" /> Available
           </span>
         </div>
       </div>
