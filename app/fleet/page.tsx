@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import {
   Car,
@@ -100,6 +100,38 @@ function formatOfflineDuration(lastSeenAt: string): string {
   const remHours = hours % 24;
   return remHours > 0 ? `${days}d ${remHours}h` : `${days}d`;
 }
+
+// ── Simulation routes (active drivers only, roughly following Accra roads) ──
+// Each route is a loop of [lat, lng] waypoints
+
+type LatLng = [number, number];
+
+const DRIVER_ROUTES: Record<string, LatLng[]> = {
+  // d1 – East Legon: loops around Boundary Rd / Ambassadorial Enclave
+  d1:  [[5.6360,-0.1570],[5.6420,-0.1490],[5.6460,-0.1400],[5.6400,-0.1330],[5.6310,-0.1370],[5.6280,-0.1480],[5.6320,-0.1560]],
+  // d2 – Osu: Cantonments Rd loop
+  d2:  [[5.5550,-0.1780],[5.5500,-0.1710],[5.5480,-0.1630],[5.5550,-0.1590],[5.5630,-0.1640],[5.5630,-0.1740]],
+  // d3 – Airport City: Liberation Rd / Airport Rd loop
+  d3:  [[5.6070,-0.1670],[5.6000,-0.1600],[5.5960,-0.1690],[5.6010,-0.1790],[5.6070,-0.1760]],
+  // d4 – Spintex: Spintex Rd east loop
+  d4:  [[5.6230,-0.0950],[5.6170,-0.0880],[5.6090,-0.0940],[5.6110,-0.1040],[5.6190,-0.1030]],
+  // d6 – Cantonments: Ring Rd East loop
+  d6:  [[5.5670,-0.1840],[5.5600,-0.1760],[5.5560,-0.1850],[5.5620,-0.1950],[5.5700,-0.1920]],
+  // d7 – Achimota: Achimota Rd / Ring Rd North
+  d7:  [[5.6520,-0.2370],[5.6600,-0.2290],[5.6580,-0.2190],[5.6480,-0.2210],[5.6430,-0.2310],[5.6470,-0.2400]],
+  // d9 – East Legon: different inner loop
+  d9:  [[5.6400,-0.1500],[5.6460,-0.1430],[5.6450,-0.1350],[5.6370,-0.1360],[5.6320,-0.1440],[5.6350,-0.1520]],
+  // d10 – Osu: Airport Rd / Labadi Rd loop
+  d10: [[5.5510,-0.1930],[5.5460,-0.1860],[5.5480,-0.1770],[5.5570,-0.1800],[5.5590,-0.1890]],
+  // d11 – Circle: Ring Rd West / Kwame Nkrumah loop
+  d11: [[5.5710,-0.2130],[5.5660,-0.2060],[5.5630,-0.2160],[5.5690,-0.2250],[5.5760,-0.2210]],
+};
+
+// How far each driver advances per tick (higher = faster)
+const DRIVER_SPEEDS: Record<string, number> = {
+  d1: 0.0028, d2: 0.0032, d3: 0.0025, d4: 0.0030,
+  d6: 0.0027, d7: 0.0022, d9: 0.0035, d10: 0.0029, d11: 0.0031,
+};
 
 const ZONES = [
   "East Legon", "Osu", "Airport City", "Spintex", "Madina",
@@ -503,6 +535,44 @@ export default function FleetDashboardPage() {
   const offline = drivers.filter((d) => d.status === "offline").length;
   const monthlyEarnings = 38_640;
 
+  // ── Map simulation ──
+  // Tracks each driver's current position along their route
+  const routeProgressRef = useRef<Record<string, { idx: number; t: number }>>(
+    Object.fromEntries(
+      Object.keys(DRIVER_ROUTES).map((id) => {
+        const route = DRIVER_ROUTES[id];
+        return [id, { idx: Math.floor(Math.random() * route.length), t: Math.random() }];
+      })
+    )
+  );
+
+  const [simPositions, setSimPositions] = useState<Record<string, LatLng>>({});
+
+  useEffect(() => {
+    const tick = () => {
+      const next: Record<string, LatLng> = {};
+      for (const [id, route] of Object.entries(DRIVER_ROUTES)) {
+        const p = routeProgressRef.current[id];
+        if (!p) continue;
+        const from = route[p.idx];
+        const to = route[(p.idx + 1) % route.length];
+        next[id] = [
+          from[0] + (to[0] - from[0]) * p.t,
+          from[1] + (to[1] - from[1]) * p.t,
+        ];
+        p.t += DRIVER_SPEEDS[id] ?? 0.003;
+        if (p.t >= 1) {
+          p.t -= 1;
+          p.idx = (p.idx + 1) % route.length;
+        }
+      }
+      setSimPositions(next);
+    };
+
+    const interval = setInterval(tick, 120);
+    return () => clearInterval(interval);
+  }, []);
+
   const filteredDrivers = drivers.filter((d) => {
     if (driverStatusFilter !== "all" && d.status !== driverStatusFilter) return false;
     if (driverSearch && !d.name.toLowerCase().includes(driverSearch.toLowerCase()) &&
@@ -510,10 +580,15 @@ export default function FleetDashboardPage() {
     return true;
   });
 
-  const driverLocations: DriverLocation[] = drivers.map((d) => ({
-    id: d.id, name: d.name, plate: d.plate, status: d.status,
-    lat: d.lat, lng: d.lng, zone: d.zone,
-  }));
+  const driverLocations: DriverLocation[] = drivers.map((d) => {
+    const sim = d.status === "active" ? simPositions[d.id] : undefined;
+    return {
+      id: d.id, name: d.name, plate: d.plate, status: d.status,
+      lat: sim ? sim[0] : d.lat,
+      lng: sim ? sim[1] : d.lng,
+      zone: d.zone,
+    };
+  });
 
   const TABS: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview" },
