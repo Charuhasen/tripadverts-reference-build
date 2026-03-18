@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import dynamic from "next/dynamic";
 import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -18,14 +17,14 @@ import {
   getZonesForCity,
 } from "@/lib/schemas/campaignData";
 import {
-  X,
   Clock,
   CalendarDays,
   MapPin,
   Globe,
-  Loader2,
   Link2,
   Link2Off,
+  Car,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -39,16 +38,6 @@ import {
 } from "@/lib/pricing";
 import type { DateRange } from "react-day-picker";
 import type { StepNavState } from "../page";
-
-const AccraZoneMap = dynamic(() => import("./AccraZoneMap"), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-muted/20">
-      <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      <span className="ml-2 text-sm text-muted-foreground">Loading map…</span>
-    </div>
-  ),
-});
 
 interface Props {
   data: CampaignTarget;
@@ -152,7 +141,6 @@ function StatTile({
 
 export function StepCampaignTarget({ data, onNext, onNavChange, submitRef, stepBackRef }: Props) {
   const [target, setTarget] = useState<CampaignTarget>(data);
-  const [hoveredZoneId, setHoveredZoneId] = useState<string | null>(null);
   const [linkedDays, setLinkedDays] = useState(true);
 
   const cityZones = useMemo(() => getZonesForCity(target.city), [target.city]);
@@ -160,11 +148,6 @@ export function StepCampaignTarget({ data, onNext, onNavChange, submitRef, stepB
   const selectedCountry = useMemo(
     () => COUNTRIES.find((c) => c.code === target.country),
     [target.country]
-  );
-
-  const selectedCity = useMemo(
-    () => selectedCountry?.cities.find((c) => c.id === target.city),
-    [selectedCountry, target.city]
   );
 
   const selectedZones = useMemo(
@@ -256,247 +239,250 @@ export function StepCampaignTarget({ data, onNext, onNavChange, submitRef, stepB
   const totalAvailableTaxis = selectedZones.reduce((sum, z) => sum + z.availableTaxis, 0);
 
   return (
-    <div className="flex h-full gap-5 min-h-0">
+    <div className="space-y-5">
 
-      {/* ── LEFT: Scrollable controls ── */}
-      <div className="w-[380px] shrink-0 flex flex-col min-h-0">
-        <div className="flex-1 min-h-0 overflow-y-auto space-y-5 pr-2">
-
-          {/* Location */}
-          <section>
-            <SectionLabel icon={Globe} title="Location" />
-            <div className="space-y-2.5">
-              <Select value={target.country} onValueChange={handleCountryChange}>
-                <SelectTrigger className="h-9 w-full text-xs">
-                  <SelectValue placeholder="Select country" />
-                </SelectTrigger>
-                <SelectContent>
-                  {COUNTRIES.map((c) => (
-                    <SelectItem key={c.code} value={c.code}>{c.flag} {c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={target.city} onValueChange={handleCityChange} disabled={!selectedCountry}>
-                <SelectTrigger className="h-9 w-full text-xs">
-                  <SelectValue placeholder={selectedCountry ? "Select city" : "Select country first"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectedCountry?.cities.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={target.medium}
-                onValueChange={(val) => setTarget((prev) => ({ ...prev, medium: val }))}
-              >
-                <SelectTrigger className="h-9 w-full text-xs">
-                  <SelectValue placeholder="Select medium" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="headrest">Headrest</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </section>
-
-          <div className="border-t border-border" />
-
-          {/* Zones */}
-          <section>
-            <SectionLabel
-              icon={MapPin}
-              title="Zones"
-              right={
-                <span className="text-xs text-muted-foreground">
-                  {selectedZones.length > 0 ? `${selectedZones.length} selected` : `${cityZones.length} available`}
-                </span>
-              }
-            />
-            {selectedZones.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-border px-3 py-4 text-center">
-                <MapPin className="w-5 h-5 text-muted-foreground/40 mx-auto mb-1.5" />
-                <p className="text-xs text-muted-foreground">Click zones on the map to select them</p>
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-1.5">
-                {selectedZones.map((z) => (
-                  <button
-                    key={z.id}
-                    onClick={() => toggleZone(z.id)}
-                    onMouseEnter={() => setHoveredZoneId(z.id)}
-                    onMouseLeave={() => setHoveredZoneId(null)}
-                    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-muted border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors cursor-pointer"
-                  >
-                    {z.name}
-                    <X className="w-3 h-3" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <div className="border-t border-border" />
-
-          {/* Schedule */}
-          <section>
-            <SectionLabel icon={CalendarDays} title="Schedule" />
-            <div className="flex justify-center">
-              <Calendar
-                mode="range"
-                selected={dateRange}
-                onSelect={handleDateSelect}
-                numberOfMonths={1}
-                disabled={{ before: new Date() }}
-              />
-            </div>
-            {target.startDate && target.endDate && target.endDate >= target.startDate && (
-              <p className="text-xs text-center text-muted-foreground mt-2">
-                {formatDateShort(target.startDate)} — {formatDateShort(target.endDate)}
-                {" · "}
-                <span className="font-semibold text-foreground">
-                  {campaignDays} day{campaignDays !== 1 ? "s" : ""}
-                </span>
-              </p>
-            )}
-          </section>
-
-          <div className="border-t border-border" />
-
-          {/* Time Window */}
-          <section>
-            <SectionLabel
-              icon={Clock}
-              title="Daily Time Window"
-              right={
-                campaignDays > 1 ? (
-                  <button
-                    onClick={() => {
-                      setLinkedDays((prev) => {
-                        if (!prev) setTarget((t) => ({ ...t, dayTimeOverrides: {} }));
-                        return !prev;
-                      });
-                    }}
-                    className={cn(
-                      "flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md border transition-colors",
-                      linkedDays
-                        ? "border-primary/40 bg-primary/10 text-primary"
-                        : "border-border text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {linkedDays ? <Link2 className="w-3 h-3" /> : <Link2Off className="w-3 h-3" />}
-                    {linkedDays ? "Linked" : "Individual"}
-                  </button>
-                ) : null
-              }
-            />
-            {campaignDays === 0 ? (
-              <p className="text-xs text-muted-foreground">Select dates above to configure time windows.</p>
-            ) : campaignDays === 1 ? (
-              <TimeRangeSlider
-                label={formatDateShort(campaignDaysList[0])}
-                dateStr={campaignDaysList[0]}
-                value={target.defaultTimeRange}
-                zoneCount={selectedZones.length}
-                onChange={(range) =>
-                  setTarget((prev) => ({ ...prev, defaultTimeRange: range, dayTimeOverrides: {} }))
-                }
-              />
-            ) : (
-              <div className="space-y-5">
-                {campaignDaysList.map((day) => {
-                  const range = getTimeRangeForDay(day, target.defaultTimeRange, target.dayTimeOverrides);
-                  return (
-                    <TimeRangeSlider
-                      key={day}
-                      label={formatDateShort(day)}
-                      dateStr={day}
-                      value={range}
-                      zoneCount={selectedZones.length}
-                      onChange={(newRange) => {
-                        if (linkedDays) {
-                          setTarget((prev) => ({
-                            ...prev,
-                            defaultTimeRange: newRange,
-                            dayTimeOverrides: {},
-                          }));
-                        } else {
-                          setTarget((prev) => ({
-                            ...prev,
-                            dayTimeOverrides: { ...prev.dayTimeOverrides, [day]: newRange },
-                          }));
-                        }
-                      }}
-                    />
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          {/* Bottom padding so last section clears the sticky estimate */}
-          <div className="h-2" />
+      {/* Location */}
+      <section>
+        <SectionLabel icon={Globe} title="Location" />
+        <div className="grid sm:grid-cols-3 gap-2.5">
+          <Select value={target.country} onValueChange={handleCountryChange}>
+            <SelectTrigger className="h-9 w-full text-xs">
+              <SelectValue placeholder="Select country" />
+            </SelectTrigger>
+            <SelectContent>
+              {COUNTRIES.map((c) => (
+                <SelectItem key={c.code} value={c.code}>{c.flag} {c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={target.city} onValueChange={handleCityChange} disabled={!selectedCountry}>
+            <SelectTrigger className="h-9 w-full text-xs">
+              <SelectValue placeholder={selectedCountry ? "Select city" : "Select country first"} />
+            </SelectTrigger>
+            <SelectContent>
+              {selectedCountry?.cities.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={target.medium}
+            onValueChange={(val) => setTarget((prev) => ({ ...prev, medium: val }))}
+          >
+            <SelectTrigger className="h-9 w-full text-xs">
+              <SelectValue placeholder="Select medium" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="headrest">Headrest</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+      </section>
 
-        {/* ── Campaign Estimate (pinned to bottom) ── */}
-        <div className="flex-shrink-0 pt-3 mt-3 border-t border-border">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-            Campaign Estimate
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <StatTile
-              label="Zones"
-              value={selectedZones.length > 0 ? selectedZones.length : "—"}
-            />
-            <StatTile
-              label="Days"
-              value={campaignDays > 0 ? campaignDays : "—"}
-            />
-            <StatTile
-              label="Taxis"
-              value={totalAvailableTaxis > 0 ? totalAvailableTaxis.toLocaleString() : "—"}
-            />
-            <StatTile
-              label="Impressions"
-              value={estimatedImpressions > 0 ? formatImpressions(estimatedImpressions) : "—"}
-              highlight
-            />
-            <div className="col-span-2">
-              <StatTile
-                label="Estimated Cost"
-                value={estimatedCost > 0 ? `GH₵ ${estimatedCost.toLocaleString()}` : "—"}
-                highlight
-                large
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      <div className="border-t border-border" />
 
-      {/* ── RIGHT: Map (always visible) ── */}
-      <div className="flex-1 min-h-0 rounded-xl overflow-hidden border border-border relative">
-        <AccraZoneMap
-          zones={cityZones}
-          center={selectedCity?.center ?? [5.6037, -0.1870]}
-          zoom={selectedCity?.zoom ?? 12}
-          selectedZoneIds={target.selectedZoneIds}
-          hoveredZoneId={hoveredZoneId}
-          onToggleZone={toggleZone}
-          onHoverZone={setHoveredZoneId}
+      {/* Zones */}
+      <section>
+        <SectionLabel
+          icon={MapPin}
+          title="Zones"
+          right={
+            cityZones.length > 0 ? (
+              <span className="text-xs text-muted-foreground">
+                {selectedZones.length > 0 ? `${selectedZones.length} / ${cityZones.length} selected` : `${cityZones.length} available`}
+              </span>
+            ) : null
+          }
         />
-        {/* Map legend */}
-        <div className="absolute bottom-3 left-3 z-[1000] bg-card/90 backdrop-blur-sm border border-border rounded-lg px-3 py-2 space-y-1">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Zone Status</p>
-          <div className="flex flex-col gap-1">
-            <span className="flex items-center gap-1.5 text-xs">
-              <span className="w-3 h-3 rounded-sm bg-[#9ca3af]/40 border border-[#9ca3af]" /> Unselected
-            </span>
-            <span className="flex items-center gap-1.5 text-xs">
-              <span className="w-3 h-3 rounded-sm bg-[#6FB4A6]/60 border border-[#4a9a8a]" /> Selected
-            </span>
+        {!target.city ? (
+          <div className="rounded-lg border border-dashed border-border px-3 py-6 text-center">
+            <MapPin className="w-5 h-5 text-muted-foreground/40 mx-auto mb-1.5" />
+            <p className="text-xs text-muted-foreground">Select a city above to see available zones</p>
           </div>
+        ) : cityZones.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border px-3 py-6 text-center">
+            <MapPin className="w-5 h-5 text-muted-foreground/40 mx-auto mb-1.5" />
+            <p className="text-xs text-muted-foreground">No zones available for this city yet</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {cityZones.map((zone) => {
+              const isSelected = target.selectedZoneIds.includes(zone.id);
+              return (
+                <button
+                  key={zone.id}
+                  onClick={() => toggleZone(zone.id)}
+                  className={cn(
+                    "text-left p-3 rounded-xl border transition-all cursor-pointer",
+                    isSelected
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                      : "border-border hover:border-primary/40 hover:bg-muted/30"
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <span className="text-sm font-semibold leading-tight">{zone.name}</span>
+                    <div className={cn(
+                      "w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-colors",
+                      isSelected ? "bg-primary border-primary" : "border-border"
+                    )}>
+                      {isSelected && (
+                        <svg viewBox="0 0 10 8" className="w-2.5 h-2.5 fill-primary-foreground">
+                          <path d="M1 4l3 3 5-6" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Car className="w-3 h-3" />
+                      {zone.availableTaxis.toLocaleString()} taxis
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Eye className="w-3 h-3" />
+                      {formatImpressions(zone.estimatedDailyImpressions)}/day
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <div className="border-t border-border" />
+
+      {/* Schedule */}
+      <section>
+        <SectionLabel icon={CalendarDays} title="Schedule" />
+        <div className="flex justify-center">
+          <Calendar
+            mode="range"
+            selected={dateRange}
+            onSelect={handleDateSelect}
+            numberOfMonths={1}
+            disabled={{ before: new Date() }}
+          />
         </div>
-      </div>
+        {target.startDate && target.endDate && target.endDate >= target.startDate && (
+          <p className="text-xs text-center text-muted-foreground mt-2">
+            {formatDateShort(target.startDate)} — {formatDateShort(target.endDate)}
+            {" · "}
+            <span className="font-semibold text-foreground">
+              {campaignDays} day{campaignDays !== 1 ? "s" : ""}
+            </span>
+          </p>
+        )}
+      </section>
+
+      <div className="border-t border-border" />
+
+      {/* Time Window */}
+      <section>
+        <SectionLabel
+          icon={Clock}
+          title="Daily Time Window"
+          right={
+            campaignDays > 1 ? (
+              <button
+                onClick={() => {
+                  setLinkedDays((prev) => {
+                    if (!prev) setTarget((t) => ({ ...t, dayTimeOverrides: {} }));
+                    return !prev;
+                  });
+                }}
+                className={cn(
+                  "flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md border transition-colors",
+                  linkedDays
+                    ? "border-primary/40 bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {linkedDays ? <Link2 className="w-3 h-3" /> : <Link2Off className="w-3 h-3" />}
+                {linkedDays ? "Linked" : "Individual"}
+              </button>
+            ) : null
+          }
+        />
+        {campaignDays === 0 ? (
+          <p className="text-xs text-muted-foreground">Select dates above to configure time windows.</p>
+        ) : campaignDays === 1 ? (
+          <TimeRangeSlider
+            label={formatDateShort(campaignDaysList[0])}
+            dateStr={campaignDaysList[0]}
+            value={target.defaultTimeRange}
+            zoneCount={selectedZones.length}
+            onChange={(range) =>
+              setTarget((prev) => ({ ...prev, defaultTimeRange: range, dayTimeOverrides: {} }))
+            }
+          />
+        ) : (
+          <div className="space-y-5">
+            {campaignDaysList.map((day) => {
+              const range = getTimeRangeForDay(day, target.defaultTimeRange, target.dayTimeOverrides);
+              return (
+                <TimeRangeSlider
+                  key={day}
+                  label={formatDateShort(day)}
+                  dateStr={day}
+                  value={range}
+                  zoneCount={selectedZones.length}
+                  onChange={(newRange) => {
+                    if (linkedDays) {
+                      setTarget((prev) => ({
+                        ...prev,
+                        defaultTimeRange: newRange,
+                        dayTimeOverrides: {},
+                      }));
+                    } else {
+                      setTarget((prev) => ({
+                        ...prev,
+                        dayTimeOverrides: { ...prev.dayTimeOverrides, [day]: newRange },
+                      }));
+                    }
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <div className="border-t border-border" />
+
+      {/* Campaign Estimate */}
+      <section>
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          Campaign Estimate
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <StatTile
+            label="Zones"
+            value={selectedZones.length > 0 ? selectedZones.length : "—"}
+          />
+          <StatTile
+            label="Days"
+            value={campaignDays > 0 ? campaignDays : "—"}
+          />
+          <StatTile
+            label="Taxis"
+            value={totalAvailableTaxis > 0 ? totalAvailableTaxis.toLocaleString() : "—"}
+          />
+          <StatTile
+            label="Impressions"
+            value={estimatedImpressions > 0 ? formatImpressions(estimatedImpressions) : "—"}
+            highlight
+          />
+        </div>
+        <div className="mt-2">
+          <StatTile
+            label="Estimated Cost"
+            value={estimatedCost > 0 ? `GH₵ ${estimatedCost.toLocaleString()}` : "—"}
+            highlight
+            large
+          />
+        </div>
+      </section>
+
     </div>
   );
 }
@@ -534,7 +520,7 @@ function TimeRangeSlider({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <span className="text-xs font-medium text-foreground">{label}</span>
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold">

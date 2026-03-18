@@ -128,7 +128,7 @@ export function StepCampaignInfo({ data, onNext, onNavChange, submitRef }: Props
       </div>
 
       {/* Name + Objective row */}
-      <div className="flex gap-4 mb-3 flex-shrink-0">
+      <div className="flex flex-col sm:flex-row gap-4 mb-3 flex-shrink-0">
         <div className="flex-1 space-y-1.5">
           <Label htmlFor="campaign-name" className="text-xs font-semibold">
             Campaign Name
@@ -142,7 +142,7 @@ export function StepCampaignInfo({ data, onNext, onNavChange, submitRef }: Props
             className="h-9"
           />
         </div>
-        <div className="w-[200px] space-y-1.5">
+        <div className="w-full sm:w-[200px] space-y-1.5">
           <Label htmlFor="campaign-objective" className="text-xs font-semibold">
             Objective
           </Label>

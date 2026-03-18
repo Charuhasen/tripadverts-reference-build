@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +43,7 @@ function formatHour(hour: number) {
 }
 
 export function StepCampaignPayment({ draft, payment, onBack, onSubmit, onNavChange, submitRef }: Props) {
+  const router = useRouter();
   const [pay, setPay] = useState<CampaignPayment>(payment);
   const [processing, setProcessing] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
@@ -170,7 +172,7 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit, onNavCha
           </div>
         </div>
 
-        <Button size="sm" className="mt-5 px-6" onClick={() => (window.location.href = "/")}>
+        <Button size="sm" className="mt-5 px-6" onClick={() => router.push("/advertiser/dashboard")}>
           Go to Dashboard
         </Button>
       </div>
@@ -178,7 +180,7 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit, onNavCha
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       <div className="mb-3">
         <h2 className="text-lg font-bold tracking-tight">Campaign Payment</h2>
         <p className="text-sm text-muted-foreground">
@@ -186,7 +188,7 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit, onNavCha
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div>
         <div className="grid lg:grid-cols-2 gap-6 max-w-5xl">
           {/* Campaign Summary */}
           <div className="space-y-4">
