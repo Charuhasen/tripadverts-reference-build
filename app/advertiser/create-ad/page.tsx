@@ -120,7 +120,7 @@ export default function CreateCampaignPage() {
 
   if (!isDesktop) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center p-6 bg-background text-foreground text-center">
+      <div className="h-[calc(100vh-3.5rem)] w-full flex flex-col items-center justify-center p-6 bg-background text-foreground text-center">
         <MonitorSmartphone className="w-16 h-16 text-muted-foreground mb-6" />
         <h2 className="text-2xl font-bold tracking-tight mb-2">Desktop Required</h2>
         <p className="text-muted-foreground max-w-sm">
@@ -131,7 +131,7 @@ export default function CreateCampaignPage() {
   }
 
   return (
-    <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
+    <div className="h-[calc(100vh-3.5rem)] bg-background text-foreground flex flex-col overflow-hidden">
       {/* Progress bar + Navigation */}
       <div className="w-full flex-shrink-0 border-b border-border">
         <div className="max-w-screen-2xl mx-auto px-6 lg:px-10 flex items-center h-11 gap-4">

@@ -63,6 +63,11 @@ export const ZONES_BY_CITY: Record<string, Zone[]> = {
   accra: [], // populated below
 };
 
+export interface SupportingDoc {
+  file: File;
+  name: string;
+}
+
 export interface CampaignInfo {
   name: string;
   objective: CampaignObjective | "";
@@ -72,6 +77,7 @@ export interface CampaignInfo {
     previewUrl: string;
     type: "image" | "video" | null;
   };
+  supportingDocs: SupportingDoc[];
 }
 
 // [startHour, endHour] e.g. [9, 17] means 09:00–17:00
@@ -108,6 +114,7 @@ export const initialCampaignDraft: CampaignDraft = {
     objective: "",
     description: "",
     adContent: { file: null, previewUrl: "", type: null },
+    supportingDocs: [],
   },
   campaignTarget: {
     country: "",
