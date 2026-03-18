@@ -94,7 +94,7 @@ export default function CampaignDetailPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-screen-xl mx-auto px-6 lg:px-10 py-6">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 py-6">
         {/* Back link */}
         <Link
           href="/advertiser/dashboard"
@@ -127,7 +127,7 @@ export default function CampaignDetailPage() {
             </div>
             <p className="text-sm text-muted-foreground mt-1">{campaign.description}</p>
           </div>
-          <div className="text-right shrink-0">
+          <div className="text-right shrink-0 hidden sm:block">
             <p className="text-xl font-bold">{formatGHS(totalCost)}</p>
             <p className="text-[10px] text-muted-foreground">Total cost</p>
           </div>
@@ -177,8 +177,8 @@ export default function CampaignDetailPage() {
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
               Booking Schedule
             </h2>
-            <div className="rounded-xl border border-border bg-card overflow-hidden">
-              <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 px-4 py-2 bg-muted/50 text-[10px] font-semibold uppercase text-muted-foreground border-b border-border">
+            <div className="rounded-xl border border-border bg-card overflow-hidden overflow-x-auto">
+              <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 px-4 py-2 bg-muted/50 text-[10px] font-semibold uppercase text-muted-foreground border-b border-border min-w-[320px]">
                 <span>Date</span>
                 <span>Time Window</span>
                 <span className="text-right">Cost</span>
@@ -190,7 +190,7 @@ export default function CampaignDetailPage() {
                     return (
                       <div
                         key={`${slot.date}-${slot.startTime}`}
-                        className="grid grid-cols-[1fr_auto_auto] gap-x-4 px-4 py-2.5 border-b border-border last:border-b-0 text-sm"
+                        className="grid grid-cols-[1fr_auto_auto] gap-x-4 px-4 py-2.5 border-b border-border last:border-b-0 text-sm min-w-[320px]"
                       >
                         <span className={cn("font-medium", i > 0 && "text-transparent")}>
                           {formatDateNice(slot.date)}
@@ -205,7 +205,7 @@ export default function CampaignDetailPage() {
                   })}
                 </div>
               ))}
-              <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 px-4 py-2.5 bg-primary/5 border-t border-primary/20">
+              <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 px-4 py-2.5 bg-primary/5 border-t border-primary/20 min-w-[320px]">
                 <span className="text-sm font-semibold">Total</span>
                 <span />
                 <span className="text-right text-sm font-bold text-primary">{formatGHS(totalCost)}</span>
@@ -236,8 +236,8 @@ export default function CampaignDetailPage() {
               </div>
 
               {/* PoP Table */}
-              <div className="rounded-xl border border-border bg-card overflow-hidden">
-                <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 px-4 py-2 bg-muted/50 text-[10px] font-semibold uppercase text-muted-foreground border-b border-border">
+              <div className="rounded-xl border border-border bg-card overflow-hidden overflow-x-auto">
+                <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 px-4 py-2 bg-muted/50 text-[10px] font-semibold uppercase text-muted-foreground border-b border-border min-w-[360px]">
                   <span>Zone</span>
                   <span>Device</span>
                   <span>Time</span>
@@ -246,13 +246,13 @@ export default function CampaignDetailPage() {
                 <div className="max-h-[320px] overflow-y-auto">
                   {popByDate && Object.keys(popByDate).sort().map((date) => (
                     <React.Fragment key={date}>
-                      <div className="px-4 py-1.5 bg-muted/30 text-[10px] font-semibold text-muted-foreground border-b border-border">
+                      <div className="px-4 py-1.5 bg-muted/30 text-[10px] font-semibold text-muted-foreground border-b border-border min-w-[360px]">
                         {formatDateNice(date)}
                       </div>
                       {popByDate[date].map((entry, i) => (
                         <div
                           key={`${entry.device}-${entry.date}-${i}`}
-                          className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 px-4 py-2 border-b border-border last:border-b-0 text-xs"
+                          className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 px-4 py-2 border-b border-border last:border-b-0 text-xs min-w-[360px]"
                         >
                           <span className="font-medium">{entry.zone}</span>
                           <span className="text-muted-foreground font-mono text-[10px]">{entry.device}</span>

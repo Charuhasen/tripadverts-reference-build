@@ -704,11 +704,11 @@ export default function AdMarketplacePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-screen-xl mx-auto px-6 lg:px-10">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10">
 
         {/* Hero */}
-        <div className="py-8 pb-6">
-          <h1 className="text-2xl font-bold tracking-tight">Ad Marketplace</h1>
+        <div className="py-6 sm:py-8 pb-5 sm:pb-6">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Ad Marketplace</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Discover and book premium digital ad screens across Accra
           </p>
@@ -733,7 +733,7 @@ export default function AdMarketplacePage() {
         </div>
 
         {/* Sticky filter bar */}
-        <div className="sticky top-14 z-20 bg-background/95 backdrop-blur-sm -mx-6 lg:-mx-10 px-6 lg:px-10 py-3 border-b border-border mb-8">
+        <div className="sticky top-14 z-20 bg-background/95 backdrop-blur-sm -mx-4 sm:-mx-6 lg:-mx-10 px-4 sm:px-6 lg:px-10 py-3 border-b border-border mb-8">
           {/* Category pills */}
           <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pb-2">
             {CATEGORIES.map(({ id, label, icon: Icon }) => (
@@ -842,7 +842,7 @@ export default function AdMarketplacePage() {
         </div>
 
         {/* Venue owner CTA */}
-        <div className="mb-14 rounded-2xl border border-dashed border-border bg-muted/30 px-8 py-10 text-center">
+        <div className="mb-14 rounded-2xl border border-dashed border-border bg-muted/30 px-4 sm:px-8 py-8 sm:py-10 text-center">
           <Building2 className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
           <h3 className="text-sm font-semibold">Own a venue or screen network?</h3>
           <p className="text-xs text-muted-foreground mt-1.5 max-w-sm mx-auto">

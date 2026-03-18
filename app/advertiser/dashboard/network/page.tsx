@@ -147,72 +147,74 @@ export default function NetworkDemandPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-screen-xl mx-auto px-6 lg:px-10 py-6">
-        {/* Top bar: selectors + inline stats */}
-        <div className="flex items-center gap-3 mb-5 flex-wrap">
-          <Link
-            href="/advertiser/dashboard"
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mr-1"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Dashboard
-          </Link>
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 py-6">
+        {/* Top bar: back + stats, then selectors */}
+        <div className="mb-5 space-y-2">
+          {/* Row 1: back link + inline stats */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <Link
+              href="/advertiser/dashboard"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Dashboard
+            </Link>
+            {/* Inline summary */}
+            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+              <span><span className="text-foreground font-semibold">{totalTaxis}</span> taxis</span>
+              <span><span className="text-foreground font-semibold">{bookedTaxis}</span> booked</span>
+              <span className={cn(
+                "font-bold px-1.5 py-0.5 rounded text-[10px]",
+                utilPct >= 75 ? "bg-red-100 text-red-700" :
+                utilPct >= 45 ? "bg-amber-100 text-amber-700" :
+                "bg-green-100 text-green-700"
+              )}>
+                {utilPct}% capacity
+              </span>
+              <span><span className="text-foreground font-semibold">{allZoneDemands.length}</span> zones</span>
+            </div>
+          </div>
+          {/* Row 2: selectors */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select value={country} onValueChange={handleCountryChange}>
+              <SelectTrigger className="flex-1 min-w-[100px] max-w-[140px] h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {COUNTRIES.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={country} onValueChange={handleCountryChange}>
-            <SelectTrigger className="w-[140px] h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {COUNTRIES.map((c) => (
-                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select value={city} onValueChange={handleCityChange}>
+              <SelectTrigger className="flex-1 min-w-[100px] max-w-[140px] h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(CITIES[country] ?? []).map((c) => (
+                  <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={city} onValueChange={handleCityChange}>
-            <SelectTrigger className="w-[140px] h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {(CITIES[country] ?? []).map((c) => (
-                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={medium} onValueChange={setMedium}>
-            <SelectTrigger className="w-[140px] h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {MEDIUMS.map((m) => (
-                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <div className="flex-1" />
-
-          {/* Inline summary */}
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <span><span className="text-foreground font-semibold">{totalTaxis}</span> taxis</span>
-            <span><span className="text-foreground font-semibold">{bookedTaxis}</span> booked</span>
-            <span className={cn(
-              "font-bold px-1.5 py-0.5 rounded text-[10px]",
-              utilPct >= 75 ? "bg-red-100 text-red-700" :
-              utilPct >= 45 ? "bg-amber-100 text-amber-700" :
-              "bg-green-100 text-green-700"
-            )}>
-              {utilPct}% capacity
-            </span>
-            <span><span className="text-foreground font-semibold">{allZoneDemands.length}</span> zones</span>
+            <Select value={medium} onValueChange={setMedium}>
+              <SelectTrigger className="flex-1 min-w-[100px] max-w-[140px] h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MEDIUMS.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         {allZoneDemands.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4">
             {/* Map — full width on mobile */}
-            <div className="rounded-xl overflow-hidden border border-border h-[calc(100vh-12rem)]">
+            <div className="rounded-xl overflow-hidden border border-border h-[400px] sm:h-[500px] lg:h-[calc(100vh-12rem)]">
               <NetworkDemandMap
                 zoneDemands={allZoneDemands}
                 center={center}
@@ -222,7 +224,7 @@ export default function NetworkDemandPage() {
             </div>
 
             {/* Zone sidebar */}
-            <div className="border border-border rounded-lg overflow-hidden flex flex-col h-[calc(100vh-12rem)]">
+            <div className="border border-border rounded-lg overflow-hidden flex flex-col h-[360px] sm:h-[400px] lg:h-[calc(100vh-12rem)]">
               {/* Sidebar header: filter + sort */}
               <div className="px-3 py-2.5 bg-muted/50 border-b border-border shrink-0 space-y-2">
                 {/* Demand filter pills */}

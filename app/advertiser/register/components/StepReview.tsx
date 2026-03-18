@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Link from "next/link";
 import { RegistrationData } from "@/lib/schemas/registrationData";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -75,20 +76,22 @@ export function StepReview({
           </span>
         </p>
         <div className="pt-8">
-          <Button onClick={() => window.location.reload()} variant="outline" className="h-12 px-8">Return Home</Button>
+          <Button asChild className="h-12 px-8">
+            <Link href="/advertiser/dashboard">Go to Dashboard</Link>
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="space-y-2 mb-8">
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">Review & Submit</h2>
+    <div className="flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="space-y-2 mb-6 sm:mb-8">
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Review & Submit</h2>
         <p className="text-muted-foreground">Please review your information before final submission.</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-2 pb-4 space-y-6">
+      <div className="space-y-6 pb-4">
         
         <SummarySection title="Identity Details" icon={User}>
           <DataPoint label="Account Type" value={data.accountType === 'business' ? 'Registered Business' : 'Individual'} />
@@ -163,7 +166,7 @@ export function StepReview({
 
       </div>
 
-      <div className="mt-8 pt-6 border-t border-border flex justify-between shrink-0">
+      <div className="mt-6 sm:mt-8 pt-6 border-t border-border flex justify-between">
         <Button variant="outline" size="lg" onClick={onBack} disabled={isSubmitting} className="h-12 px-8">Back</Button>
         <Button 
           size="lg" 

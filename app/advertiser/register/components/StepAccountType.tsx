@@ -19,13 +19,13 @@ export function StepAccountType({
   const isComplete = true; // Validation removed for testing
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="text-center space-y-2 mb-8">
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">Let's get started</h2>
+    <div className="flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="text-center space-y-2 mb-6 sm:mb-8">
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Let's get started</h2>
         <p className="text-muted-foreground">First, tell us where you're located and how you want to use the platform.</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-2 pb-4 space-y-6">
+      <div className="space-y-6 pb-4">
         {/* Country Selection */}
         <div className="space-y-3">
           <Label htmlFor="country" className="text-base text-foreground">Country of Registration</Label>
@@ -93,7 +93,7 @@ export function StepAccountType({
         </div>
       </div>
 
-      <div className="mt-8 pt-6 border-t border-border flex justify-end shrink-0">
+      <div className="mt-6 sm:mt-8 pt-6 border-t border-border flex justify-end">
         <Button 
           size="lg" 
           disabled={!isComplete}

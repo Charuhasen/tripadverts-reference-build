@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { RegistrationData, initialRegistrationData } from "@/lib/schemas/registrationData";
 import { StepAccountType } from "./components/StepAccountType";
 import { StepIdentity } from "./components/StepIdentity";
@@ -9,8 +10,7 @@ import { StepBusinessInfo } from "./components/StepBusinessInfo";
 import { StepDirectors } from "./components/StepDirectors";
 import { StepBanking } from "./components/StepBanking";
 import { StepReview } from "./components/StepReview";
-import { Check, MonitorSmartphone } from "lucide-react";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { Check } from "lucide-react";
 
 const STEPS_CONFIG = [
   { id: 1, title: "Account Type" },
@@ -22,17 +22,21 @@ const STEPS_CONFIG = [
 ];
 
 export default function CustomerRegistrationPage() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [data, setData] = useState<RegistrationData>(initialRegistrationData);
-  const [direction, setDirection] = useState(1); // 1 for forward, -1 for backward
+  const [direction, setDirection] = useState(1);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: "instant" });
+  }, [currentStep]);
 
   const handleNext = (stepData: Partial<RegistrationData>) => {
     setData((prev) => ({ ...prev, ...stepData }));
     setDirection(1);
-    
-    // Logic for skipping steps
+
     if (currentStep === 2 && data.accountType === "individual" && (!stepData.accountType || stepData.accountType === "individual")) {
-      // Individual doesn't need Business and Director steps (steps 3 and 4)
       setCurrentStep(5);
     } else {
       setCurrentStep((prev) => Math.min(prev + 1, 6));
@@ -41,8 +45,6 @@ export default function CustomerRegistrationPage() {
 
   const handleBack = () => {
     setDirection(-1);
-    
-    // Logic for skipping steps going back
     if (currentStep === 5 && data.accountType === "individual") {
       setCurrentStep(2);
     } else {
@@ -71,64 +73,43 @@ export default function CustomerRegistrationPage() {
     }),
   };
 
-  const isDesktop = useMediaQuery("(min-width: 768px)");
-  const [mounted, setMounted] = useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null; // Prevent hydration mismatch
-
-  if (!isDesktop) {
-    return (
-      <div className="flex-1 w-full flex flex-col items-center justify-center p-6 bg-background text-foreground text-center">
-        <MonitorSmartphone className="w-16 h-16 text-muted-foreground mb-6" />
-        <h2 className="text-2xl font-bold tracking-tight mb-2">Desktop Required</h2>
-        <p className="text-muted-foreground max-w-sm">
-          This registration process requires scanning multiple documents and is best experienced on a desktop, laptop, or tablet device.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex-1 flex flex-col bg-background text-foreground overflow-hidden">
+    <div className="flex-1 flex flex-col bg-background text-foreground overflow-x-hidden">
       {/* Progress Tracker */}
-      <div className="w-full px-6 lg:px-10 py-6 flex-shrink-0 border-b border-border">
+      <div className="w-full px-4 sm:px-6 lg:px-10 py-4 sm:py-6 flex-shrink-0 border-b border-border">
         <div className="max-w-screen-xl mx-auto flex items-center justify-between relative">
           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-[2px] bg-border -z-10" />
-          {STEPS_CONFIG.map((step) => {
-            const isActive = step.id === currentStep;
-            const isCompleted = step.id < currentStep;
+          {STEPS_CONFIG
+            .filter((step) => !(data.accountType === "individual" && (step.id === 3 || step.id === 4)))
+            .map((step, index) => {
+              const displayNumber = index + 1;
+              const isActive = step.id === currentStep;
+              const isCompleted = step.id < currentStep;
 
-            // For individual, skip Business and Directors visually
-            if (data.accountType === "individual" && (step.id === 3 || step.id === 4)) return null;
-
-            return (
-              <div key={step.id} className="flex flex-col items-center relative z-10">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-colors duration-300 ${
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                      : isCompleted
-                        ? "bg-foreground text-background"
-                        : "bg-muted text-muted-foreground border border-border"
-                  }`}
-                >
-                  {isCompleted ? <Check className="w-4 h-4" /> : step.id}
+              return (
+                <div key={step.id} className="flex flex-col items-center relative z-10">
+                  <div
+                    className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-semibold text-xs sm:text-sm transition-colors duration-300 ${
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                        : isCompleted
+                          ? "bg-foreground text-background"
+                          : "bg-muted text-muted-foreground border border-border"
+                    }`}
+                  >
+                    {isCompleted ? <Check className="w-3 h-3 sm:w-4 sm:h-4" /> : displayNumber}
+                  </div>
+                  <span className={`mt-2 text-xs font-medium hidden sm:block ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                    {step.title}
+                  </span>
                 </div>
-                <span className={`mt-2 text-xs font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
-                  {step.title}
-                </span>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       </div>
 
-      {/* Form content — full width, scrollable */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Form content */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={currentStep}
@@ -137,7 +118,7 @@ export default function CustomerRegistrationPage() {
             initial="initial"
             animate="animate"
             exit="exit"
-            className="max-w-screen-xl mx-auto px-6 lg:px-10 py-8 w-full flex flex-col"
+            className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 w-full flex flex-col"
           >
             {currentStep === 1 && (
               <StepAccountType data={data} onNext={handleNext} />

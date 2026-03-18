@@ -98,13 +98,13 @@ export function StepIdentity({
   };
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="space-y-2 mb-8">
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">Identity Details</h2>
+    <div className="flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="space-y-2 mb-6 sm:mb-8">
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Identity Details</h2>
         <p className="text-muted-foreground">Please provide your personal information for verification.</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-2 pb-4 space-y-6">
+      <div className="space-y-6 pb-4">
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="fullName">Full Legal Name</Label>
@@ -154,7 +154,7 @@ export function StepIdentity({
         </div>
       </div>
 
-      <div className="mt-8 pt-6 border-t border-border flex justify-between shrink-0">
+      <div className="mt-6 sm:mt-8 pt-6 border-t border-border flex justify-between">
         <Button variant="outline" size="lg" onClick={onBack} className="h-12 px-8">Back</Button>
         <Button 
           size="lg" 

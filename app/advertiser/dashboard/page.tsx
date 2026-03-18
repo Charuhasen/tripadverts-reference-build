@@ -176,7 +176,7 @@ export default function AdvertiserDashboardPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-screen-xl mx-auto px-6 lg:px-10 py-8">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8">
         {/* Overview section */}
         <div className="flex items-baseline justify-between mb-6">
           <div>
@@ -201,7 +201,7 @@ export default function AdvertiserDashboardPage() {
         {/* Filter bar */}
         <div className="flex items-center gap-3 mb-5 flex-wrap">
           {/* Status filters */}
-          <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1 overflow-x-auto">
             {statuses.map((s) => (
               <button
                 key={s.value}

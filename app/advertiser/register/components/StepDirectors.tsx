@@ -57,13 +57,13 @@ export function StepDirectors({
   const isComplete = true; // Disabled for testing
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="space-y-2 mb-8">
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">Directors & Owners</h2>
+    <div className="flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="space-y-2 mb-6 sm:mb-8">
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Directors & Owners</h2>
         <p className="text-muted-foreground">Add all directors and beneficial owners (anyone holding 25% or more).</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-2 pb-4 space-y-6">
+      <div className="space-y-6 pb-4">
         {!isValidOwnership && (
           <div className="p-3 bg-destructive/10 text-destructive rounded-lg text-sm font-medium border border-destructive/20">
             Total ownership percentage cannot exceed 100%. Current total: {totalOwnership}%
@@ -144,7 +144,7 @@ export function StepDirectors({
         </div>
       </div>
 
-      <div className="mt-8 pt-6 border-t border-border flex justify-between shrink-0">
+      <div className="mt-6 sm:mt-8 pt-6 border-t border-border flex justify-between">
         <Button variant="outline" size="lg" onClick={onBack} className="h-12 px-8">Back</Button>
         <Button 
           size="lg" 

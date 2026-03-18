@@ -4,7 +4,7 @@ export default function AdvertiserLayout({ children }: { children: React.ReactNo
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)]">
       <AdvertiserSidebar />
-      <main className="flex-1 min-w-0">{children}</main>
+      <main className="flex-1 min-w-0 pb-16 md:pb-0">{children}</main>
     </div>
   );
 }

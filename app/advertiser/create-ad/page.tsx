@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, MonitorSmartphone, X, ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { Check, X, ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import {
   CampaignDraft,
@@ -39,29 +38,26 @@ export default function CreateCampaignPage() {
   const [navState, setNavState] = useState<StepNavState>({ canProceed: false, nextLabel: "Next" });
   const submitRef = useRef<(() => void) | null>(null);
   const stepBackRef = useRef<(() => void) | null>(null);
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const scrollRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   const handleNavChange = useCallback((state: StepNavState) => {
     setNavState(state);
   }, []);
 
+  useEffect(() => { setMounted(true); }, []);
+
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    scrollRef.current?.scrollTo({ top: 0, behavior: "instant" });
+  }, [currentStep]);
 
   // Unsaved changes warning
   useEffect(() => {
     const hasData =
       draft.campaignInfo.name !== "" ||
       draft.campaignTarget.selectedZoneIds.length > 0;
-
     if (!hasData) return;
-
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-    };
-
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, [draft]);
@@ -100,56 +96,31 @@ export default function CreateCampaignPage() {
   };
 
   const variants: any = {
-    initial: (dir: number) => ({
-      x: dir > 0 ? "50%" : "-50%",
-      opacity: 0,
-    }),
-    animate: {
-      x: 0,
-      opacity: 1,
-      transition: { duration: 0.3, ease: "easeInOut" },
-    },
-    exit: (dir: number) => ({
-      x: dir < 0 ? "50%" : "-50%",
-      opacity: 0,
-      transition: { duration: 0.3, ease: "easeInOut" },
-    }),
+    initial: (dir: number) => ({ x: dir > 0 ? "50%" : "-50%", opacity: 0 }),
+    animate: { x: 0, opacity: 1, transition: { duration: 0.3, ease: "easeInOut" } },
+    exit: (dir: number) => ({ x: dir < 0 ? "50%" : "-50%", opacity: 0, transition: { duration: 0.3, ease: "easeInOut" } }),
   };
 
   if (!mounted) return null;
 
-  if (!isDesktop) {
-    return (
-      <div className="h-[calc(100vh-3.5rem)] w-full flex flex-col items-center justify-center p-6 bg-background text-foreground text-center">
-        <MonitorSmartphone className="w-16 h-16 text-muted-foreground mb-6" />
-        <h2 className="text-2xl font-bold tracking-tight mb-2">Desktop Required</h2>
-        <p className="text-muted-foreground max-w-sm">
-          Campaign creation is best experienced on a desktop or laptop device.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="h-[calc(100vh-3.5rem)] bg-background text-foreground flex flex-col overflow-hidden">
+    <div className="h-[calc(100vh-7.5rem)] md:h-[calc(100vh-3.5rem)] bg-background text-foreground flex flex-col overflow-hidden">
       {/* Progress bar + Navigation */}
       <div className="w-full flex-shrink-0 border-b border-border">
-        <div className="max-w-screen-2xl mx-auto px-6 lg:px-10 flex items-center h-11 gap-4">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 flex items-center h-11 gap-3">
+
           {/* Left: Back + Exit */}
-          <div className="flex items-center gap-3 min-w-[120px]">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-[70px] sm:min-w-[110px]">
             {(currentStep > 1 || stepBackRef.current) && (
               <button
                 onClick={() => {
-                  if (stepBackRef.current) {
-                    stepBackRef.current();
-                  } else {
-                    handleBack();
-                  }
+                  if (stepBackRef.current) { stepBackRef.current(); }
+                  else { handleBack(); }
                 }}
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                Back
+                <span className="hidden sm:inline">Back</span>
               </button>
             )}
             <button
@@ -157,28 +128,27 @@ export default function CreateCampaignPage() {
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
-              Exit
+              <span className="hidden sm:inline">Exit</span>
             </button>
           </div>
 
-          {/* Center: Steps */}
-          <div className="flex-1 flex items-center justify-center gap-1 text-xs">
+          {/* Center: Steps — full on desktop, compact on mobile */}
+          <div className="flex-1 flex items-center justify-center text-xs sm:hidden">
+            <span className="font-medium text-foreground">{STEPS[currentStep - 1].title}</span>
+            <span className="text-muted-foreground ml-2 text-[10px]">{currentStep} / {STEPS.length}</span>
+          </div>
+          <div className="hidden sm:flex flex-1 items-center justify-center gap-1 text-xs">
             {STEPS.map((step, index) => {
               const isActive = step.id === currentStep;
               const isCompleted = step.id < currentStep;
               return (
                 <div key={step.id} className="flex items-center gap-1">
                   {index > 0 && (
-                    <span className={cn(
-                      "w-4 h-px mx-1",
-                      isCompleted ? "bg-primary" : "bg-border"
-                    )} />
+                    <span className={cn("w-4 h-px mx-1", isCompleted ? "bg-primary" : "bg-border")} />
                   )}
                   <span className={cn(
                     "font-medium transition-colors",
-                    isActive ? "text-foreground" :
-                    isCompleted ? "text-primary" :
-                    "text-muted-foreground"
+                    isActive ? "text-foreground" : isCompleted ? "text-primary" : "text-muted-foreground"
                   )}>
                     {isCompleted ? <Check className="w-3.5 h-3.5 inline" /> : null}
                     {isCompleted ? "" : `${step.id}. `}{step.title}
@@ -189,7 +159,7 @@ export default function CreateCampaignPage() {
           </div>
 
           {/* Right: Next */}
-          <div className="min-w-[120px] flex justify-end">
+          <div className="min-w-[70px] sm:min-w-[110px] flex justify-end">
             <Button
               size="sm"
               disabled={navState.processing}
@@ -198,11 +168,12 @@ export default function CreateCampaignPage() {
               {navState.processing ? (
                 <>
                   <Loader2 className="mr-1.5 size-3.5 animate-spin" />
-                  Processing...
+                  <span className="hidden sm:inline">Processing...</span>
                 </>
               ) : (
                 <>
-                  {navState.nextLabel}
+                  <span className="hidden sm:inline">{navState.nextLabel}</span>
+                  <span className="sm:hidden">Next</span>
                   <ArrowRight className="ml-1.5 size-3.5" />
                 </>
               )}
@@ -219,8 +190,8 @@ export default function CreateCampaignPage() {
         </div>
       </div>
 
-      {/* Step Content — full width, no card wrapper */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      {/* Step Content */}
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={currentStep}
@@ -229,9 +200,8 @@ export default function CreateCampaignPage() {
             initial="initial"
             animate="animate"
             exit="exit"
-            className="h-full flex flex-col"
           >
-            <div className="flex-1 min-h-0 max-w-screen-2xl mx-auto w-full px-6 lg:px-10 py-3 flex flex-col">
+            <div className="max-w-screen-2xl mx-auto w-full px-4 sm:px-6 lg:px-10 py-4">
               {currentStep === 1 && (
                 <StepCampaignInfo
                   data={draft.campaignInfo}
@@ -288,15 +258,9 @@ export default function CreateCampaignPage() {
                 You have unsaved progress. Would you like to save this as a draft before leaving?
               </p>
               <div className="flex flex-col gap-2 mt-5">
-                <Button onClick={handleSaveDraft} size="sm" className="w-full">
-                  Save as Draft
-                </Button>
-                <Button onClick={handleDiscardDraft} variant="outline" size="sm" className="w-full">
-                  Discard & Exit
-                </Button>
-                <Button onClick={() => setShowExitDialog(false)} variant="ghost" size="sm" className="w-full">
-                  Cancel
-                </Button>
+                <Button onClick={handleSaveDraft} size="sm" className="w-full">Save as Draft</Button>
+                <Button onClick={handleDiscardDraft} variant="outline" size="sm" className="w-full">Discard & Exit</Button>
+                <Button onClick={() => setShowExitDialog(false)} variant="ghost" size="sm" className="w-full">Cancel</Button>
               </div>
             </motion.div>
           </motion.div>
