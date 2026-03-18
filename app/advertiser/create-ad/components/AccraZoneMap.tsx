@@ -86,13 +86,13 @@ export default function AccraZoneMap({ zones, center, zoom, selectedZoneIds, hov
               mouseout: () => onHoverZone(null),
             }}
           >
-            <Tooltip direction="top" sticky>
-              <div className="text-xs">
-                <p className="font-bold">{zone.name}</p>
-                <p>{zone.category} · {zone.trafficDensity} traffic</p>
-                <p>{zone.availableTaxis} taxis · {zone.estimatedDailyImpressions.toLocaleString()} imp/day</p>
-                <p className="mt-1 font-medium">{selected ? "Click to deselect" : "Click to select"}</p>
-              </div>
+            {/* Permanent name label centred on the polygon */}
+            <Tooltip
+              direction="center"
+              permanent
+              className="zone-label"
+            >
+              {zone.name}
             </Tooltip>
           </Polygon>
         );

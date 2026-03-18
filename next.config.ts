@@ -5,18 +5,19 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // Apply strict COEP only to routes that need SharedArrayBuffer (e.g. face detection)
-        source: "/((?!campaigns|fleet|admin).*)",
+        // Relaxed policy for all routes — allows external resources (map tiles, CDNs) to load
+        source: "/(.*)",
         headers: [
-          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
         ],
       },
       {
-        // Routes with Leaflet maps need to load external map tiles — use relaxed COEP
-        source: "/(campaigns|fleet|admin)(.*)",
+        // Strict COEP only on routes that use SharedArrayBuffer (face detection / WASM)
+        // Add specific route patterns here as needed — do NOT use a broad wildcard
+        source: "/face-detection(.*)",
         headers: [
-          { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
         ],
       },
     ];
