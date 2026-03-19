@@ -38,6 +38,8 @@ export interface DemoCampaign {
   objective: "awareness" | "engagement" | "promotion";
   description: string;
   createdAt: string;
+  advertiser: string;
+  advertiserType: "business" | "sole";
   zones: CampaignZone[];
   bookingSlots: BookingSlot[];
   adType: "image" | "video";
@@ -86,6 +88,8 @@ export const DEMO_CAMPAIGNS: DemoCampaign[] = [
     objective: "promotion",
     description: "Ramadan special offers on selected products across Accra zones",
     createdAt: "2026-02-01",
+    advertiser: "Al-Noor Trading Co.",
+    advertiserType: "business",
     adType: "video",
     thumbnail: "/thumbnails/ramadan-promo.svg",
     zones: [
@@ -127,6 +131,8 @@ export const DEMO_CAMPAIGNS: DemoCampaign[] = [
     objective: "awareness",
     description: "Brand awareness campaign for the new year across Lagos",
     createdAt: "2025-12-10",
+    advertiser: "BrandWave Nigeria",
+    advertiserType: "business",
     adType: "image",
     thumbnail: "/thumbnails/new-year-push.svg",
     zones: [
@@ -164,6 +170,8 @@ export const DEMO_CAMPAIGNS: DemoCampaign[] = [
     objective: "engagement",
     description: "Fashion brand spring collection — targeting high-traffic commercial zones",
     createdAt: "2026-03-01",
+    advertiser: "BrandWave Nigeria",
+    advertiserType: "business",
     adType: "video",
     thumbnail: "/thumbnails/spring-collection.svg",
     zones: [
@@ -187,6 +195,8 @@ export const DEMO_CAMPAIGNS: DemoCampaign[] = [
     objective: "engagement",
     description: "Mobile fintech app promotion on taxi-top screens in Nairobi",
     createdAt: "2026-03-08",
+    advertiser: "PesaFast Ltd.",
+    advertiserType: "business",
     adType: "image",
     thumbnail: "/thumbnails/fintech-app.svg",
     zones: [
@@ -209,6 +219,8 @@ export const DEMO_CAMPAIGNS: DemoCampaign[] = [
     objective: "promotion",
     description: "Unlimited data bundle offers for Q2 — pending creative review",
     createdAt: "2026-03-14",
+    advertiser: "ConnectAfrica Telecom",
+    advertiserType: "business",
     adType: "video",
     thumbnail: "/thumbnails/telecom-bundle.svg",
     zones: [
@@ -232,6 +244,8 @@ export const DEMO_CAMPAIGNS: DemoCampaign[] = [
     objective: "awareness",
     description: "Weekend open day announcement for new residential development",
     createdAt: "2026-03-13",
+    advertiser: "Kofi Mensah Properties",
+    advertiserType: "sole",
     adType: "image",
     thumbnail: "/thumbnails/real-estate.svg",
     zones: [
