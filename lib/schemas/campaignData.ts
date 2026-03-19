@@ -10,6 +10,8 @@ export interface Zone {
   trafficDensity: TrafficDensity;
   availableTaxis: number;
   estimatedDailyImpressions: number;
+  estimatedDailyFootfall: number; // unique people passing through per day
+  pois: string[]; // notable landmarks / points of interest
   polygon: [number, number][]; // [lat, lng] pairs
   center: [number, number]; // [lat, lng]
 }
@@ -142,6 +144,8 @@ const ACCRA_ZONES: Zone[] = [
     trafficDensity: "High",
     availableTaxis: 38,
     estimatedDailyImpressions: 52000,
+    estimatedDailyFootfall: 85000,
+    pois: ["Kotoka Int'l Airport", "A&C Mall", "Movenpick Hotel", "Papaye", "Fiesta Royale Hotel"],
     center: [5.6050, -0.1720],
     polygon: [
       [5.615131631401568,  -0.21311759948730472],
@@ -169,6 +173,8 @@ const ACCRA_ZONES: Zone[] = [
     trafficDensity: "High",
     availableTaxis: 35,
     estimatedDailyImpressions: 34000,
+    estimatedDailyFootfall: 55000,
+    pois: ["Achimota Mall", "Achimota School", "Achimota Forest Reserve", "Total Fuel Station"],
     center: [5.6150, -0.2350],
     polygon: [
       [5.615046212557332, -0.21595001220703128],
@@ -201,6 +207,8 @@ const ACCRA_ZONES: Zone[] = [
     trafficDensity: "High",
     availableTaxis: 50,
     estimatedDailyImpressions: 60000,
+    estimatedDailyFootfall: 120000,
+    pois: ["Makola Market", "National Theatre", "Accra High Street", "Melcom (High St)", "Barclays Bank HQ"],
     center: [5.559, -0.200],
     polygon: [
       [5.530048289559503,  -0.2223014831542969],

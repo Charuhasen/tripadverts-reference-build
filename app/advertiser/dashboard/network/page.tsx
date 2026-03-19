@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Loader2, ArrowRight, Eye, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowRight, Eye, ArrowLeft, MapPin, Users } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -307,6 +307,55 @@ export default function NetworkDemandPage() {
                             ~{(zd.zone.estimatedDailyImpressions / 1000).toFixed(0)}k/day
                           </span>
                         </div>
+
+                        {/* POIs + footfall — always visible */}
+                        <div className="mt-2.5 space-y-2 border-t border-border pt-2.5">
+                            {/* Impression + footfall estimates */}
+                            <div className="grid grid-cols-2 gap-1.5">
+                              <div className="bg-primary/5 rounded-md px-2.5 py-1.5">
+                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-0.5">
+                                  <Eye className="w-2.5 h-2.5" />
+                                  Est. impressions
+                                </div>
+                                <p className="text-xs font-bold text-foreground">
+                                  ~{(zd.zone.estimatedDailyImpressions / 1000).toFixed(0)}k
+                                  <span className="text-[10px] font-normal text-muted-foreground"> /day</span>
+                                </p>
+                              </div>
+                              <div className="bg-muted/60 rounded-md px-2.5 py-1.5">
+                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-0.5">
+                                  <Users className="w-2.5 h-2.5" />
+                                  Daily footfall
+                                </div>
+                                <p className="text-xs font-bold text-foreground">
+                                  ~{zd.zone.estimatedDailyFootfall >= 1000
+                                    ? `${(zd.zone.estimatedDailyFootfall / 1000).toFixed(0)}k`
+                                    : zd.zone.estimatedDailyFootfall}
+                                  <span className="text-[10px] font-normal text-muted-foreground"> people</span>
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* POIs */}
+                            {zd.zone.pois && zd.zone.pois.length > 0 && (
+                              <div>
+                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-1.5">
+                                  <MapPin className="w-2.5 h-2.5" />
+                                  Key landmarks
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  {zd.zone.pois.map((poi) => (
+                                    <span
+                                      key={poi}
+                                      className="inline-block text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border"
+                                    >
+                                      {poi}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
 
                         {/* Book CTA */}
                         {available > 0 && (
