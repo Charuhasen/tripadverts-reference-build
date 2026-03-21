@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CampaignInfo, CampaignObjective, SupportingDoc } from "@/lib/schemas/campaignData";
+import { getSlotMultiplier } from "@/lib/pricing";
 import { Upload, X, ImageIcon, Film, Clock, FileText, FilePlus, Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StepNavState } from "../page";
@@ -372,6 +373,31 @@ export function StepCampaignInfo({ data, onNext, onNavChange, submitRef }: Props
             e.target.value = "";
           }}
         />
+      </div>
+
+      {/* Slot Pricing Guide */}
+      <div className="mt-5 border-t border-border pt-5">
+        <div className="flex items-center gap-1.5 mb-2">
+          <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">How Ad Slots Work</span>
+        </div>
+        <p className="text-xs text-muted-foreground mb-3">
+          Your ad plays in a 5-minute loop shared with other advertisers. Each slot is 15 seconds of screen time. The more slots your ad takes, the higher the cost. This ensures fair access for all advertisers — no single brand can monopolise the entire loop.
+        </p>
+        <div className="grid grid-cols-4 gap-2">
+          {[1, 2, 3, 4].map((n) => (
+            <div
+              key={n}
+              className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-center"
+            >
+              <p className="text-sm font-bold">{n} slot{n > 1 ? "s" : ""}</p>
+              <p className="text-[10px] text-muted-foreground">{n * 15}s per loop</p>
+              <p className="text-[10px] font-semibold text-primary mt-0.5">
+                {n === 1 ? "base price" : `×${getSlotMultiplier(n)} price`}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
 
     </div>

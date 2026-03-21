@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, ScanFace, Truck, ShieldCheck, Megaphone, Menu, X } from "lucide-react";
+import { User, ScanFace, Truck, ShieldCheck, Megaphone, Menu, X, CarFront } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
   { href: "/admin",                label: "Admin",          icon: ShieldCheck, match: (p: string) => p.startsWith("/admin")      },
   { href: "/fleet",                label: "Fleet",          icon: Truck,       match: (p: string) => p.startsWith("/fleet")      },
   { href: "/advertiser/dashboard", label: "Advertiser",     icon: Megaphone,   match: (p: string) => p.startsWith("/advertiser") },
+  { href: "/driver",               label: "Driver",         icon: CarFront,    match: (p: string) => p.startsWith("/driver")     },
   { href: "/",                     label: "Face Detection", icon: ScanFace,    match: (p: string) => p === "/"                   },
 ];
 
@@ -55,11 +56,14 @@ export function Navbar() {
           <div className="flex-1" />
 
           {/* Profile button */}
-          <button className="flex items-center gap-2 shrink-0 cursor-pointer">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors">
-              <User className="w-4 h-4 text-primary" />
+          <Link
+            href={pathname.startsWith("/driver") ? "/driver/profile" : "#"}
+            className="flex items-center gap-2 shrink-0"
+          >
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors text-xs font-bold text-primary">
+              {pathname.startsWith("/driver") ? "KA" : <User className="w-4 h-4 text-primary" />}
             </div>
-          </button>
+          </Link>
 
           {/* Hamburger — mobile only */}
           <button

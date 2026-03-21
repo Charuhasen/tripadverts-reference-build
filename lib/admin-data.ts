@@ -42,6 +42,7 @@ export interface IndividualDriver {
   lat: number;
   lng: number;
   tabletOnline: boolean;
+  tabletId: string;
   pendingPayout: number;
   lastPayout: { amount: number; date: string };
   joinedAt: string;
@@ -89,14 +90,14 @@ export const FLEET_DRIVERS: FleetDriver[] = [
 ];
 
 export const INDIVIDUAL_DRIVERS: IndividualDriver[] = [
-  { id: "id1", name: "Kwame Asante",   phone: "024 511 2233", plate: "GT 1234-24", vehicle: "Toyota Corolla", zone: "East Legon",  status: "active",  lat: 5.636, lng: -0.157, tabletOnline: true,  pendingPayout: 240, lastPayout: { amount: 310, date: "2026-03-01" }, joinedAt: "2024-01-15", lastSeen: "2026-03-16T09:15:00" },
-  { id: "id2", name: "Abena Owusu",    phone: "050 999 8877", plate: "GW 5678-23", vehicle: "Hyundai Accent", zone: "Madina",      status: "active",  lat: 5.666, lng: -0.213, tabletOnline: true,  pendingPayout: 185, lastPayout: { amount: 220, date: "2026-03-01" }, joinedAt: "2024-02-20", lastSeen: "2026-03-16T09:10:00" },
-  { id: "id3", name: "Kofi Mensah",    phone: "026 122 3344", plate: "GT 9012-24", vehicle: "Kia Rio",        zone: "Circle",      status: "offline", lat: 5.570, lng: -0.214, tabletOnline: false, pendingPayout: 95,  lastPayout: { amount: 180, date: "2026-03-01" }, joinedAt: "2024-03-10", lastSeen: "2026-03-16T04:22:00" },
-  { id: "id4", name: "Efua Darko",     phone: "024 777 5566", plate: "GT 3456-22", vehicle: "Toyota Yaris",  zone: "Achimota",    status: "active",  lat: 5.608, lng: -0.241, tabletOnline: true,  pendingPayout: 320, lastPayout: { amount: 290, date: "2026-03-01" }, joinedAt: "2024-04-05", lastSeen: "2026-03-16T09:07:00" },
-  { id: "id5", name: "Yaw Boateng",    phone: "020 566 9900", plate: "GN 8765-23", vehicle: "Nissan Sentra", zone: "Osu",         status: "active",  lat: 5.551, lng: -0.185, tabletOnline: false, pendingPayout: 150, lastPayout: { amount: 210, date: "2026-03-01" }, joinedAt: "2024-05-18", lastSeen: "2026-03-16T08:50:00" },
-  { id: "id6", name: "Akua Asante",    phone: "026 344 1122", plate: "GT 2109-24", vehicle: "Honda Civic",   zone: "Legon",       status: "offline", lat: 5.649, lng: -0.199, tabletOnline: false, pendingPayout: 60,  lastPayout: { amount: 150, date: "2026-03-01" }, joinedAt: "2024-06-01", lastSeen: "2026-03-16T06:10:00" },
-  { id: "id7", name: "Nii Teye",       phone: "050 891 2233", plate: "GT 5544-23", vehicle: "Suzuki Swift",  zone: "Dansoman",    status: "active",  lat: 5.584, lng: -0.256, tabletOnline: true,  pendingPayout: 275, lastPayout: { amount: 330, date: "2026-03-01" }, joinedAt: "2024-07-14", lastSeen: "2026-03-16T09:02:00" },
-  { id: "id8", name: "Adwoa Frimpong", phone: "024 233 4455", plate: "GT 7897-24", vehicle: "Toyota Vitz",   zone: "Cantonments", status: "active",  lat: 5.567, lng: -0.178, tabletOnline: true,  pendingPayout: 195, lastPayout: { amount: 260, date: "2026-03-01" }, joinedAt: "2024-08-30", lastSeen: "2026-03-16T09:11:00" },
+  { id: "id1", name: "Kwame Asante",   phone: "024 511 2233", plate: "GT 1234-24", vehicle: "Toyota Corolla", zone: "East Legon",  status: "active",  lat: 5.636, lng: -0.157, tabletOnline: true,  tabletId: "TXD-ACC-017", pendingPayout: 240, lastPayout: { amount: 310, date: "2026-03-01" }, joinedAt: "2024-01-15", lastSeen: "2026-03-16T09:15:00" },
+  { id: "id2", name: "Abena Owusu",    phone: "050 999 8877", plate: "GW 5678-23", vehicle: "Hyundai Accent", zone: "Madina",      status: "active",  lat: 5.666, lng: -0.213, tabletOnline: true,  tabletId: "TXD-ACC-029", pendingPayout: 185, lastPayout: { amount: 220, date: "2026-03-01" }, joinedAt: "2024-02-20", lastSeen: "2026-03-16T09:10:00" },
+  { id: "id3", name: "Kofi Mensah",    phone: "026 122 3344", plate: "GT 9012-24", vehicle: "Kia Rio",        zone: "Circle",      status: "offline", lat: 5.570, lng: -0.214, tabletOnline: false, tabletId: "TXD-ACC-034", pendingPayout: 95,  lastPayout: { amount: 180, date: "2026-03-01" }, joinedAt: "2024-03-10", lastSeen: "2026-03-16T04:22:00" },
+  { id: "id4", name: "Efua Darko",     phone: "024 777 5566", plate: "GT 3456-22", vehicle: "Toyota Yaris",  zone: "Achimota",    status: "active",  lat: 5.608, lng: -0.241, tabletOnline: true,  tabletId: "TXD-ACC-011", pendingPayout: 320, lastPayout: { amount: 290, date: "2026-03-01" }, joinedAt: "2024-04-05", lastSeen: "2026-03-16T09:07:00" },
+  { id: "id5", name: "Yaw Boateng",    phone: "020 566 9900", plate: "GN 8765-23", vehicle: "Nissan Sentra", zone: "Osu",         status: "active",  lat: 5.551, lng: -0.185, tabletOnline: false, tabletId: "TXD-ACC-041", pendingPayout: 150, lastPayout: { amount: 210, date: "2026-03-01" }, joinedAt: "2024-05-18", lastSeen: "2026-03-16T08:50:00" },
+  { id: "id6", name: "Akua Asante",    phone: "026 344 1122", plate: "GT 2109-24", vehicle: "Honda Civic",   zone: "Legon",       status: "offline", lat: 5.649, lng: -0.199, tabletOnline: false, tabletId: "TXD-ACC-052", pendingPayout: 60,  lastPayout: { amount: 150, date: "2026-03-01" }, joinedAt: "2024-06-01", lastSeen: "2026-03-16T06:10:00" },
+  { id: "id7", name: "Nii Teye",       phone: "050 891 2233", plate: "GT 5544-23", vehicle: "Suzuki Swift",  zone: "Dansoman",    status: "active",  lat: 5.584, lng: -0.256, tabletOnline: true,  tabletId: "TXD-ACC-008", pendingPayout: 275, lastPayout: { amount: 330, date: "2026-03-01" }, joinedAt: "2024-07-14", lastSeen: "2026-03-16T09:02:00" },
+  { id: "id8", name: "Adwoa Frimpong", phone: "024 233 4455", plate: "GT 7897-24", vehicle: "Toyota Vitz",   zone: "Cantonments", status: "active",  lat: 5.567, lng: -0.178, tabletOnline: true,  tabletId: "TXD-ACC-063", pendingPayout: 195, lastPayout: { amount: 260, date: "2026-03-01" }, joinedAt: "2024-08-30", lastSeen: "2026-03-16T09:11:00" },
 ];
 
 export const PAYOUT_RECORDS: PayoutRecord[] = [

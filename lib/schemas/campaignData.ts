@@ -14,6 +14,7 @@ export interface Zone {
   pois: string[]; // notable landmarks / points of interest
   polygon: [number, number][]; // [lat, lng] pairs
   center: [number, number]; // [lat, lng]
+  priceMultiplier: number; // regional pricing weight (e.g. 1.0 = base, 2.0 = double)
 }
 
 export interface City {
@@ -95,6 +96,7 @@ export interface CampaignTarget {
   endDate: string; // YYYY-MM-DD
   defaultTimeRange: TimeRange;
   dayTimeOverrides: Record<string, TimeRange>; // "YYYY-MM-DD" -> [start, end]
+  slotCount: number; // number of ad rotation slots (1 slot = 15s in a 5-min loop)
 }
 
 export type PaymentMethod = "momo" | "stripe" | "";
@@ -128,6 +130,7 @@ export const initialCampaignDraft: CampaignDraft = {
     endDate: "",
     defaultTimeRange: [8, 18],
     dayTimeOverrides: {},
+    slotCount: 1,
   },
   campaignPayment: {
     method: "",
@@ -145,6 +148,7 @@ const ACCRA_ZONES: Zone[] = [
     availableTaxis: 38,
     estimatedDailyImpressions: 52000,
     estimatedDailyFootfall: 85000,
+    priceMultiplier: 3.0,
     pois: ["Kotoka Int'l Airport", "A&C Mall", "Movenpick Hotel", "Papaye", "Fiesta Royale Hotel"],
     center: [5.6050, -0.1720],
     polygon: [
@@ -174,6 +178,7 @@ const ACCRA_ZONES: Zone[] = [
     availableTaxis: 35,
     estimatedDailyImpressions: 34000,
     estimatedDailyFootfall: 55000,
+    priceMultiplier: 1.0,
     pois: ["Achimota Mall", "Achimota School", "Achimota Forest Reserve", "Total Fuel Station"],
     center: [5.6150, -0.2350],
     polygon: [
@@ -208,6 +213,7 @@ const ACCRA_ZONES: Zone[] = [
     availableTaxis: 50,
     estimatedDailyImpressions: 60000,
     estimatedDailyFootfall: 120000,
+    priceMultiplier: 1.5,
     pois: ["Makola Market", "National Theatre", "Accra High Street", "Melcom (High St)", "Barclays Bank HQ"],
     center: [5.559, -0.200],
     polygon: [

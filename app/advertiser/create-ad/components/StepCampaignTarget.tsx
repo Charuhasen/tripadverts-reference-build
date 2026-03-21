@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import {
   getDayType,
   calcTimeRangeCost,
+  getSlotMultiplier,
   getHourlyRates,
   TIER_LABELS,
   TIER_BG,
@@ -223,18 +224,19 @@ export function StepCampaignTarget({ data, onNext, onNavChange, submitRef, stepB
   }, [campaignDays, campaignDaysList, target.defaultTimeRange, target.dayTimeOverrides]);
 
   const totalDailyImpressions = selectedZones.reduce((sum, z) => sum + z.estimatedDailyImpressions, 0);
+  const zoneWeight = selectedZones.reduce((sum, z) => sum + z.priceMultiplier, 0);
   const slotFraction = avgHoursPerDay / 16;
   const estimatedImpressions = Math.round(totalDailyImpressions * campaignDays * slotFraction);
 
   const estimatedCost = useMemo(() => {
-    if (campaignDays === 0 || selectedZones.length === 0) return 0;
+    if (campaignDays === 0 || zoneWeight === 0) return 0;
     let total = 0;
     for (const day of campaignDaysList) {
       const [s, e] = getTimeRangeForDay(day, target.defaultTimeRange, target.dayTimeOverrides);
-      total += calcTimeRangeCost(s, e, getDayType(day), selectedZones.length);
+      total += calcTimeRangeCost(s, e, getDayType(day), zoneWeight);
     }
-    return Math.round(total);
-  }, [campaignDays, campaignDaysList, selectedZones.length, target.defaultTimeRange, target.dayTimeOverrides]);
+    return Math.round(total * getSlotMultiplier(target.slotCount));
+  }, [campaignDays, campaignDaysList, zoneWeight, target.defaultTimeRange, target.dayTimeOverrides, target.slotCount]);
 
   const totalAvailableTaxis = selectedZones.reduce((sum, z) => sum + z.availableTaxis, 0);
 
@@ -341,6 +343,14 @@ export function StepCampaignTarget({ data, onNext, onNavChange, submitRef, stepB
                       <Eye className="w-3 h-3" />
                       {formatImpressions(zone.estimatedDailyImpressions)}/day
                     </span>
+                    <span className={cn(
+                      "ml-auto font-semibold",
+                      zone.priceMultiplier >= 2.0 ? "text-orange-500" :
+                      zone.priceMultiplier >= 1.5 ? "text-yellow-600" :
+                      "text-muted-foreground"
+                    )}>
+                      {zone.priceMultiplier === 1.0 ? "base rate" : `×${zone.priceMultiplier} rate`}
+                    </span>
                   </div>
                 </button>
               );
@@ -410,7 +420,7 @@ export function StepCampaignTarget({ data, onNext, onNavChange, submitRef, stepB
             label={formatDateShort(campaignDaysList[0])}
             dateStr={campaignDaysList[0]}
             value={target.defaultTimeRange}
-            zoneCount={selectedZones.length}
+            zoneCount={zoneWeight}
             onChange={(range) =>
               setTarget((prev) => ({ ...prev, defaultTimeRange: range, dayTimeOverrides: {} }))
             }
@@ -425,7 +435,7 @@ export function StepCampaignTarget({ data, onNext, onNavChange, submitRef, stepB
                   label={formatDateShort(day)}
                   dateStr={day}
                   value={range}
-                  zoneCount={selectedZones.length}
+                  zoneCount={zoneWeight}
                   onChange={(newRange) => {
                     if (linkedDays) {
                       setTarget((prev) => ({
