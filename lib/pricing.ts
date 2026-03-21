@@ -4,28 +4,28 @@
 // Pricing varies by day-of-week and time-of-day.
 //
 // Weekdays (Mon–Thu):
-//   06–09  Peak (commute)         GHS 130/hr
-//   16–19  Peak (commute)         GHS 130/hr
-//   10–15  Off-peak               GHS 80/hr
-//   00–05, 20–23  Off-peak        GHS 55/hr
+//   06–09  Peak (commute)         GHS 90/hr
+//   16–19  Peak (commute)         GHS 90/hr
+//   10–15  Off-peak               GHS 55/hr
+//   00–05, 20–23  Off-peak        GHS 35/hr
 //
 // Friday:
-//   06–09  Peak                   GHS 130/hr
-//   10–17  Off-peak               GHS 80/hr
-//   18–23  Fri Night (premium)    GHS 190/hr
-//   00–05  Off-peak               GHS 55/hr
+//   06–09  Peak                   GHS 90/hr
+//   10–17  Off-peak               GHS 55/hr
+//   18–23  Fri Night (premium)    GHS 130/hr
+//   00–05  Off-peak               GHS 35/hr
 //
 // Saturday:
-//   06–11  Off-peak               GHS 90/hr
-//   12–17  Peak                   GHS 120/hr
-//   18–23  Sat Night (premium)    GHS 190/hr
-//   00–05  Off-peak               GHS 55/hr
+//   06–11  Off-peak               GHS 60/hr
+//   12–17  Peak                   GHS 85/hr
+//   18–23  Sat Night (premium)    GHS 130/hr
+//   00–05  Off-peak               GHS 35/hr
 //
 // Sunday (Accra — church attendance shapes traffic):
-//   06–12  Off-peak (church)      GHS 50/hr
-//   12–18  Peak                   GHS 120/hr
-//   18–21  Off-peak               GHS 80/hr
-//   22–23, 00–05  Off-peak        GHS 50/hr
+//   06–12  Off-peak (church)      GHS 35/hr
+//   12–18  Peak                   GHS 85/hr
+//   18–21  Off-peak               GHS 55/hr
+//   22–23, 00–05  Off-peak        GHS 35/hr
 
 export type DayType = "weekday" | "friday" | "saturday" | "sunday";
 
@@ -74,28 +74,28 @@ export function getDayLabel(dateStr: string): string {
 export function getHourRate(hour: number, dayType: DayType): HourRate {
   switch (dayType) {
     case "weekday":
-      if (hour >= 6 && hour < 10) return { rate: 130, tier: "peak" };
-      if (hour >= 16 && hour < 20) return { rate: 130, tier: "peak" };
-      if (hour >= 10 && hour < 16) return { rate: 80, tier: "off-peak" };
-      return { rate: 55, tier: "off-peak" };
+      if (hour >= 6 && hour < 10) return { rate: 90, tier: "peak" };
+      if (hour >= 16 && hour < 20) return { rate: 90, tier: "peak" };
+      if (hour >= 10 && hour < 16) return { rate: 55, tier: "off-peak" };
+      return { rate: 35, tier: "off-peak" };
 
     case "friday":
-      if (hour >= 6 && hour < 10) return { rate: 130, tier: "peak" };
-      if (hour >= 10 && hour < 18) return { rate: 80, tier: "off-peak" };
-      if (hour >= 18) return { rate: 190, tier: "fri-night" };
-      return { rate: 55, tier: "off-peak" };
+      if (hour >= 6 && hour < 10) return { rate: 90, tier: "peak" };
+      if (hour >= 10 && hour < 18) return { rate: 55, tier: "off-peak" };
+      if (hour >= 18) return { rate: 130, tier: "fri-night" };
+      return { rate: 35, tier: "off-peak" };
 
     case "saturday":
-      if (hour >= 6 && hour < 12) return { rate: 90, tier: "off-peak" };
-      if (hour >= 12 && hour < 18) return { rate: 120, tier: "peak" };
-      if (hour >= 18) return { rate: 190, tier: "sat-night" };
-      return { rate: 55, tier: "off-peak" };
+      if (hour >= 6 && hour < 12) return { rate: 60, tier: "off-peak" };
+      if (hour >= 12 && hour < 18) return { rate: 85, tier: "peak" };
+      if (hour >= 18) return { rate: 130, tier: "sat-night" };
+      return { rate: 35, tier: "off-peak" };
 
     case "sunday":
-      if (hour >= 6 && hour < 12) return { rate: 50, tier: "off-peak" };
-      if (hour >= 12 && hour < 18) return { rate: 120, tier: "peak" };
-      if (hour >= 18 && hour < 22) return { rate: 80, tier: "off-peak" };
-      return { rate: 50, tier: "off-peak" };
+      if (hour >= 6 && hour < 12) return { rate: 35, tier: "off-peak" };
+      if (hour >= 12 && hour < 18) return { rate: 85, tier: "peak" };
+      if (hour >= 18 && hour < 22) return { rate: 55, tier: "off-peak" };
+      return { rate: 35, tier: "off-peak" };
   }
 }
 

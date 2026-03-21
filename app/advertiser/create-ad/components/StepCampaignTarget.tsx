@@ -545,8 +545,8 @@ function TimeRangeSlider({
         </div>
       </div>
 
-      <div className="relative">
-        <div className="flex h-7 rounded-md overflow-hidden mb-1 border border-border">
+      <div>
+        <div className="flex h-7 rounded-md overflow-hidden border border-border">
           {segments.map((seg) => {
             const widthPct = ((seg.end - seg.start) / 24) * 100;
             const inRange = seg.end > value[0] && seg.start < value[1];
@@ -571,28 +571,30 @@ function TimeRangeSlider({
             );
           })}
         </div>
-        <Slider
-          min={0}
-          max={24}
-          step={1}
-          value={[value[0], value[1]]}
-          onValueChange={([start, end]: [number, number]) => {
-            if (end - start < 1) return;
-            onChange([start, end] as TimeRange);
-          }}
-          aria-label={`Time range for ${label}`}
-        />
+        <div className="mt-1">
+          <Slider
+            min={0}
+            max={24}
+            step={1}
+            value={[value[0], value[1]]}
+            onValueChange={([start, end]: [number, number]) => {
+              if (end - start < 1) return;
+              onChange([start, end] as TimeRange);
+            }}
+            aria-label={`Time range for ${label}`}
+          />
+        </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex justify-between text-[10px] text-muted-foreground flex-1">
+      <div className="flex flex-col gap-1.5 mt-1">
+        <div className="flex justify-between text-[10px] text-muted-foreground w-full">
           <span>00:00</span>
           <span>06:00</span>
           <span>12:00</span>
           <span>18:00</span>
           <span>24:00</span>
         </div>
-        <div className="flex items-center gap-2 ml-3">
+        <div className="flex items-center justify-end gap-2 mt-1">
           <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
             <span className="w-2 h-2 rounded-sm bg-orange-500 inline-block" /> Peak
           </span>
