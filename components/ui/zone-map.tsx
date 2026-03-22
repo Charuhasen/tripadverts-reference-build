@@ -47,7 +47,7 @@ export default function ZoneMap({
 }) {
   return (
     <div className="w-full h-full min-h-[400px] rounded-xl overflow-hidden border border-border shadow-inner relative z-0 group">
-       <MapContainer center={city.center} zoom={city.zoom} style={{ width: "100%", height: "100%" }}>
+       <MapContainer center={city.center} zoom={city.zoom} scrollWheelZoom={false} style={{ width: "100%", height: "100%" }}>
          <TileLayer 
            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
            attribution='&copy; <a href="https://carto.com/">CARTO</a>'
