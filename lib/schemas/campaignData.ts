@@ -128,7 +128,7 @@ export const initialCampaignDraft: CampaignDraft = {
     taxiCount: 10,
     startDate: "",
     endDate: "",
-    defaultTimeRange: [8, 18],
+    defaultTimeRange: [9, 17],
     dayTimeOverrides: {},
     slotCount: 1,
   },

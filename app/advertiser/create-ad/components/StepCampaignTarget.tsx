@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
+import dynamic from "next/dynamic";
+import { motion, useSpring, useTransform } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -15,6 +17,7 @@ import {
   TimeRange,
   COUNTRIES,
   getZonesForCity,
+  TrafficDensity,
 } from "@/lib/schemas/campaignData";
 import {
   Clock,
@@ -88,7 +91,48 @@ function formatImpressions(n: number): string {
   return n.toLocaleString();
 }
 
+function AnimatedNumber({ value, prefix = "" }: { value: number; prefix?: string }) {
+  const spring = useSpring(value, { bounce: 0, duration: 800 });
+  useEffect(() => { spring.set(value); }, [value, spring]);
+  const display = useTransform(spring, (current) => `${prefix}${Math.round(current).toLocaleString()}`);
+  return <motion.span>{display}</motion.span>;
+}
+
+function AnimatedImpressions({ value }: { value: number }) {
+  const spring = useSpring(value, { bounce: 0, duration: 800 });
+  useEffect(() => { spring.set(value); }, [value, spring]);
+  const display = useTransform(spring, (current) => formatImpressions(Math.round(current)));
+  return <motion.span>{display}</motion.span>;
+}
+
+function TrafficDensityBars({ density }: { density: TrafficDensity }) {
+  const bars = density === "High" ? 3 : density === "Medium" ? 2 : 1;
+  return (
+    <div className="flex items-end gap-[2px] h-3 ml-2" title={`${density} Traffic`}>
+      {[1, 2, 3].map((i) => (
+        <div
+          key={i}
+          className={cn(
+            "w-1 rounded-sm",
+            i <= bars ? "bg-primary" : "bg-muted-foreground/30",
+            i === 1 ? "h-1.5" : i === 2 ? "h-2" : "h-3"
+          )}
+        />
+      ))}
+    </div>
+  );
+}
+
 // ── Section header ──
+
+const ZoneMap = dynamic(() => import("@/components/ui/zone-map"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full min-h-[400px] rounded-xl bg-muted/50 animate-pulse flex items-center justify-center border border-border">
+      <MapPin className="w-8 h-8 text-muted-foreground/30 animate-bounce" />
+    </div>
+  ),
+});
 
 function SectionLabel({ icon: Icon, title, right }: {
   icon: React.ElementType;
@@ -115,7 +159,7 @@ function StatTile({
   large = false,
 }: {
   label: string;
-  value: string | number;
+  value: React.ReactNode;
   highlight?: boolean;
   large?: boolean;
 }) {
@@ -143,6 +187,15 @@ function StatTile({
 export function StepCampaignTarget({ data, onNext, onNavChange, submitRef, stepBackRef }: Props) {
   const [target, setTarget] = useState<CampaignTarget>(data);
   const [linkedDays, setLinkedDays] = useState(true);
+  const [monthsCount, setMonthsCount] = useState(1);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    setMonthsCount(mq.matches ? 2 : 1);
+    const handler = (e: MediaQueryListEvent) => setMonthsCount(e.matches ? 2 : 1);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   const cityZones = useMemo(() => getZonesForCity(target.city), [target.city]);
 
@@ -241,50 +294,51 @@ export function StepCampaignTarget({ data, onNext, onNavChange, submitRef, stepB
   const totalAvailableTaxis = selectedZones.reduce((sum, z) => sum + z.availableTaxis, 0);
 
   return (
-    <div className="space-y-5">
+    <div className="grid lg:grid-cols-[1fr_320px] gap-6 relative">
+      
+      {/* Left Column: Configuration */}
+      <div className="space-y-6">
+        
+        {/* Location */}
+        <section className="bg-card border border-border rounded-xl p-5 shadow-sm">
+          <SectionLabel icon={Globe} title="Location" />
+          <div className="grid sm:grid-cols-3 gap-2.5">
+            <Select value={target.country} onValueChange={handleCountryChange}>
+              <SelectTrigger className="h-9 w-full text-xs bg-background">
+                <SelectValue placeholder="Select country" />
+              </SelectTrigger>
+              <SelectContent>
+                {COUNTRIES.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>{c.flag} {c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={target.city} onValueChange={handleCityChange} disabled={!selectedCountry}>
+              <SelectTrigger className="h-9 w-full text-xs bg-background">
+                <SelectValue placeholder={selectedCountry ? "Select city" : "Select country first"} />
+              </SelectTrigger>
+              <SelectContent>
+                {selectedCountry?.cities.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={target.medium}
+              onValueChange={(val) => setTarget((prev) => ({ ...prev, medium: val }))}
+            >
+              <SelectTrigger className="h-9 w-full text-xs bg-background">
+                <SelectValue placeholder="Select medium" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="headrest">Headrest</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </section>
 
-      {/* Location */}
-      <section>
-        <SectionLabel icon={Globe} title="Location" />
-        <div className="grid sm:grid-cols-3 gap-2.5">
-          <Select value={target.country} onValueChange={handleCountryChange}>
-            <SelectTrigger className="h-9 w-full text-xs">
-              <SelectValue placeholder="Select country" />
-            </SelectTrigger>
-            <SelectContent>
-              {COUNTRIES.map((c) => (
-                <SelectItem key={c.code} value={c.code}>{c.flag} {c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={target.city} onValueChange={handleCityChange} disabled={!selectedCountry}>
-            <SelectTrigger className="h-9 w-full text-xs">
-              <SelectValue placeholder={selectedCountry ? "Select city" : "Select country first"} />
-            </SelectTrigger>
-            <SelectContent>
-              {selectedCountry?.cities.map((c) => (
-                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={target.medium}
-            onValueChange={(val) => setTarget((prev) => ({ ...prev, medium: val }))}
-          >
-            <SelectTrigger className="h-9 w-full text-xs">
-              <SelectValue placeholder="Select medium" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="headrest">Headrest</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </section>
-
-      <div className="border-t border-border" />
-
-      {/* Zones */}
-      <section>
+        {/* Zones */}
+        <section className="bg-card border border-border rounded-xl p-5 shadow-sm">
         <SectionLabel
           icon={MapPin}
           title="Zones"
@@ -307,7 +361,19 @@ export function StepCampaignTarget({ data, onNext, onNavChange, submitRef, stepB
             <p className="text-xs text-muted-foreground">No zones available for this city yet</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          <div className="space-y-4">
+            {/* Desktop Map */}
+            <div className="hidden lg:block h-[450px]">
+              <ZoneMap
+                city={selectedCountry?.cities.find((c) => c.id === target.city)!}
+                zones={cityZones}
+                selectedIds={target.selectedZoneIds}
+                onZoneClick={toggleZone}
+              />
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:hidden gap-2">
             {cityZones.map((zone) => {
               const isSelected = target.selectedZoneIds.includes(zone.id);
               return (
@@ -315,14 +381,17 @@ export function StepCampaignTarget({ data, onNext, onNavChange, submitRef, stepB
                   key={zone.id}
                   onClick={() => toggleZone(zone.id)}
                   className={cn(
-                    "text-left p-3 rounded-xl border transition-all cursor-pointer",
+                    "text-left p-3 rounded-xl border transition-all cursor-pointer bg-background",
                     isSelected
-                      ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                      : "border-border hover:border-primary/40 hover:bg-muted/30"
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/20 shadow-md shadow-primary/5"
+                      : "border-border hover:border-primary/40 hover:bg-muted/30 hover:shadow-sm"
                   )}
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <span className="text-sm font-semibold leading-tight">{zone.name}</span>
+                    <div className="flex items-center">
+                      <span className="text-sm font-semibold leading-tight">{zone.name}</span>
+                      <TrafficDensityBars density={zone.trafficDensity} />
+                    </div>
                     <div className={cn(
                       "w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-colors",
                       isSelected ? "bg-primary border-primary" : "border-border"
@@ -355,23 +424,38 @@ export function StepCampaignTarget({ data, onNext, onNavChange, submitRef, stepB
                 </button>
               );
             })}
+            </div>
           </div>
         )}
-      </section>
+        </section>
 
-      <div className="border-t border-border" />
-
-      {/* Schedule */}
-      <section>
+        {/* Schedule */}
+        <section className="bg-card border border-border rounded-xl p-5 shadow-sm">
         <SectionLabel icon={CalendarDays} title="Schedule" />
         <div className="flex justify-center">
-          <Calendar
-            mode="range"
-            selected={dateRange}
-            onSelect={handleDateSelect}
-            numberOfMonths={1}
-            disabled={{ before: new Date() }}
-          />
+          {(() => {
+            const nextMonthStart = new Date();
+            nextMonthStart.setMonth(nextMonthStart.getMonth() + 1, 1);
+            nextMonthStart.setHours(0, 0, 0, 0);
+
+            const nextMonthEnd = new Date(nextMonthStart);
+            nextMonthEnd.setMonth(nextMonthEnd.getMonth() + 1, 0);
+            nextMonthEnd.setHours(23, 59, 59, 999);
+
+            return (
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={handleDateSelect}
+                numberOfMonths={monthsCount}
+                defaultMonth={nextMonthStart}
+                disabled={[
+                  { before: nextMonthStart },
+                  { after: nextMonthEnd }
+                ]}
+              />
+            );
+          })()}
         </div>
         {target.startDate && target.endDate && target.endDate >= target.startDate && (
           <p className="text-xs text-center text-muted-foreground mt-2">
@@ -382,12 +466,10 @@ export function StepCampaignTarget({ data, onNext, onNavChange, submitRef, stepB
             </span>
           </p>
         )}
-      </section>
+        </section>
 
-      <div className="border-t border-border" />
-
-      {/* Time Window */}
-      <section>
+        {/* Time Window */}
+        <section className="bg-card border border-border rounded-xl p-5 shadow-sm">
         <SectionLabel
           icon={Clock}
           title="Daily Time Window"
@@ -455,43 +537,49 @@ export function StepCampaignTarget({ data, onNext, onNavChange, submitRef, stepB
             })}
           </div>
         )}
-      </section>
+        </section>
+      </div>
 
-      <div className="border-t border-border" />
-
-      {/* Campaign Estimate */}
-      <section>
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-          Campaign Estimate
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <StatTile
-            label="Zones"
-            value={selectedZones.length > 0 ? selectedZones.length : "—"}
-          />
-          <StatTile
-            label="Days"
-            value={campaignDays > 0 ? campaignDays : "—"}
-          />
-          <StatTile
-            label="Taxis"
-            value={totalAvailableTaxis > 0 ? totalAvailableTaxis.toLocaleString() : "—"}
-          />
-          <StatTile
-            label="Impressions"
-            value={estimatedImpressions > 0 ? formatImpressions(estimatedImpressions) : "—"}
-            highlight
-          />
-        </div>
-        <div className="mt-2">
-          <StatTile
-            label="Estimated Cost"
-            value={estimatedCost > 0 ? `GH₵ ${estimatedCost.toLocaleString()}` : "—"}
-            highlight
-            large
-          />
-        </div>
-      </section>
+      {/* Right Column: Sticky Campaign Estimate */}
+      <div className="relative">
+        <section className="sticky top-6 bg-card border border-border rounded-xl p-5 shadow-sm">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            Campaign Estimate
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <StatTile
+              label="Zones"
+              value={selectedZones.length > 0 ? selectedZones.length : "—"}
+            />
+            <StatTile
+              label="Days"
+              value={campaignDays > 0 ? campaignDays : "—"}
+            />
+            <StatTile
+              label="Taxis"
+              value={totalAvailableTaxis > 0 ? <AnimatedNumber value={totalAvailableTaxis} /> : "—"}
+            />
+            <StatTile
+              label="Impressions"
+              value={estimatedImpressions > 0 ? <AnimatedImpressions value={estimatedImpressions} /> : "—"}
+              highlight
+            />
+          </div>
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <StatTile
+              label="Estimated Cost"
+              value={estimatedCost > 0 ? <AnimatedNumber value={estimatedCost} prefix="GH₵ " /> : "—"}
+              highlight
+              large
+            />
+          </div>
+          
+          <div className="mt-4 text-[10px] text-muted-foreground text-center px-2">
+            Pricing dynamically adapts to traffic density, time of day, and location multiplier.
+          </div>
+        </section>
+      </div>
 
     </div>
   );
@@ -528,6 +616,19 @@ function TimeRangeSlider({
     }
   }
 
+  // Generate SVG Path for the histogram
+  const maxRate = 100; // arbitrary max for scaling
+  let histogramPath = `M 0,100 `;
+  for (let i = 0; i <= 24; i++) {
+     const hrIndex = Math.min(23, i);
+     const rate = hourlyRates[hrIndex].rate;
+     const x = (i / 24) * 100;
+     const y = 100 - (rate / maxRate) * 100;
+     // Add point
+     histogramPath += `L ${x},${y} `;
+  }
+  histogramPath += `L 100,100 Z`;
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -546,7 +647,49 @@ function TimeRangeSlider({
       </div>
 
       <div>
-        <div className="flex h-7 rounded-md overflow-hidden border border-border">
+        {/* Availability Bar */}
+        <div className="flex h-1.5 rounded-sm overflow-hidden mb-1.5">
+          {Array.from({ length: 24 }).map((_, h) => {
+            const inRange = h >= value[0] && h < value[1];
+            // Deterministic mock based on date and hour
+            const str = (dateStr || "default") + h;
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash |= 0;
+            }
+            const val = Math.abs(hash) % 100;
+            const isPeak = hourlyRates[h].tier !== "off-peak";
+            const bookedPct = Math.min(100, val + (isPeak ? 40 : 0));
+            
+            let status = "green";
+            if (bookedPct >= 90) status = "red";
+            else if (bookedPct >= 50) status = "yellow";
+            
+            const bgColor = status === "green" ? "bg-emerald-500" : status === "yellow" ? "bg-amber-400" : "bg-rose-500";
+            
+            return (
+              <div
+                key={`avail-${h}`}
+                className={cn(
+                  "flex-1 border-r border-background/20 last:border-r-0",
+                  bgColor
+                )}
+                title={`${formatHour(h)}–${formatHour(h + 1)}: ${status === "green" ? "< 50% booked" : status === "yellow" ? "≥ 50% booked" : "Fully booked"}`}
+              />
+            );
+          })}
+        </div>
+
+        <div className="relative">
+          {/* Histogram Base */}
+          <div className="absolute -inset-x-0 bottom-0 h-10 overflow-hidden pointer-events-none z-0 opacity-[0.03]">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full fill-foreground">
+              <path d={histogramPath} />
+            </svg>
+          </div>
+
+          <div className="flex h-7 rounded-md overflow-hidden border border-border relative z-10 w-full shadow-inner bg-background">
           {segments.map((seg) => {
             const widthPct = ((seg.end - seg.start) / 24) * 100;
             const inRange = seg.end > value[0] && seg.start < value[1];
@@ -571,6 +714,7 @@ function TimeRangeSlider({
             );
           })}
         </div>
+        </div>
         <div className="mt-1">
           <Slider
             min={0}
@@ -594,16 +738,29 @@ function TimeRangeSlider({
           <span>18:00</span>
           <span>24:00</span>
         </div>
-        <div className="flex items-center justify-end gap-2 mt-1">
-          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <span className="w-2 h-2 rounded-sm bg-orange-500 inline-block" /> Peak
-          </span>
-          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <span className="w-2 h-2 rounded-sm bg-pink-600 inline-block" /> Fri/Sat Night
-          </span>
-          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <span className="w-2 h-2 rounded-sm bg-zinc-400/80 inline-block" /> Off-Peak
-          </span>
+        <div className="flex items-center justify-between flex-wrap gap-2 mt-1">
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <span className="w-2 h-2 rounded-sm bg-emerald-500 inline-block" /> &lt;50% Booked
+            </span>
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <span className="w-2 h-2 rounded-sm bg-amber-400 inline-block" /> ≥50% Booked
+            </span>
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <span className="w-2 h-2 rounded-sm bg-rose-500 inline-block" /> Full
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <span className="w-2 h-2 rounded-sm bg-orange-500 inline-block" /> Peak
+            </span>
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <span className="w-2 h-2 rounded-sm bg-pink-600 inline-block" /> Fri/Sat Night
+            </span>
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <span className="w-2 h-2 rounded-sm bg-zinc-400/80 inline-block" /> Off-Peak
+            </span>
+          </div>
         </div>
       </div>
     </div>

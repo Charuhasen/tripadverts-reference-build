@@ -27,6 +27,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getDayType, calcTimeRangeCost, getSlotMultiplier } from "@/lib/pricing";
 import type { StepNavState } from "../page";
 
 interface Props {
@@ -91,13 +92,19 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit, onNavCha
   const estimatedImpressions = Math.round(
     totalDailyImpressions * campaignDays * slotFraction * taxiFraction
   );
-  const estimatedCost = Math.round(
-    campaignTarget.taxiCount * campaignDays * avgHoursPerDay * 0.75
-  );
+  const zoneWeight = selectedZones.reduce((sum, z) => sum + z.priceMultiplier, 0);
+  let totalCost = 0;
+  if (campaignDays > 0 && zoneWeight > 0) {
+    for (const day of campaignDaysList) {
+      const [s, e] = campaignTarget.dayTimeOverrides[day] ?? campaignTarget.defaultTimeRange;
+      totalCost += calcTimeRangeCost(s, e, getDayType(day), zoneWeight);
+    }
+  }
+  const estimatedCost = Math.round(totalCost * getSlotMultiplier(campaignTarget.slotCount));
 
   const handlePay = () => {
     setProcessing(true);
-    onNavChange?.({ canProceed: false, nextLabel: `Pay $${estimatedCost.toLocaleString()}`, processing: true });
+    onNavChange?.({ canProceed: false, nextLabel: `Pay GH₵${estimatedCost.toLocaleString()}`, processing: true });
     // Simulate payment processing
     setTimeout(() => {
       setProcessing(false);
@@ -108,7 +115,7 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit, onNavCha
   useEffect(() => {
     onNavChange?.({
       canProceed: !processing,
-      nextLabel: `Pay $${estimatedCost.toLocaleString()}`,
+      nextLabel: `Pay GH₵${estimatedCost.toLocaleString()}`,
       processing,
     });
   }, [processing, estimatedCost, onNavChange]);
@@ -168,7 +175,7 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit, onNavCha
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Total Paid</span>
-            <span className="font-bold text-lg">${estimatedCost.toLocaleString()}</span>
+            <span className="font-bold text-lg">GH₵{estimatedCost.toLocaleString()}</span>
           </div>
         </div>
 
@@ -359,7 +366,7 @@ export function StepCampaignPayment({ draft, payment, onBack, onSubmit, onNavCha
             <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 mt-3">
               <div className="flex justify-between items-center">
                 <span className="font-medium">Total Amount</span>
-                <span className="text-2xl font-bold">${estimatedCost.toLocaleString()}</span>
+                <span className="text-2xl font-bold">GH₵{estimatedCost.toLocaleString()}</span>
               </div>
             </div>
           </div>
